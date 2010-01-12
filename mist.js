@@ -11,13 +11,13 @@
  * @see 
  */
 
-var mist = {};
+if (!window.mist) window.mist = {};
 
 /*
-	‰Šú‰»
+	åˆæœŸåŒ–
 */
 mist.init = function _t_mist_init () {
-	// live event‚Ìİ’è 
+	// live eventã®è¨­å®š 
 	$('a').live('click', this.event.link);
 	$.browser.msie ? $(':submit').live('click', function (env) {
 		this.event.form.call($(this).closest('form').get(0), env);
@@ -25,26 +25,26 @@ mist.init = function _t_mist_init () {
 
 	this.social.load_person();
 
-	// /‚Ì“Ç‚İ‚İ 
-	this.page.get('/');
-
 	$(function () {
-		// ’Ç‰Á‘ÎÛƒ^ƒO‚Ìİ’è 
+		// /ã®èª­ã¿è¾¼ã¿ 
+		this.page.get('/');
+
+		// è¿½åŠ å¯¾è±¡ã‚¿ã‚°ã®è¨­å®š 
 		if (!$('#mist_content').length) $('body').append('<div id="mist_content">');
 	});
 };
 
 /*
-	ƒy[ƒW‘JˆÚŠÖŒW
+	ãƒšãƒ¼ã‚¸é·ç§»é–¢ä¿‚
 */
-mist.page = {
-	// Œ»İ•\¦’†‚Ìpath 
+$.extend(mist.page, {
+	// ç¾åœ¨è¡¨ç¤ºä¸­ã®path 
 	'path' : '',
-	// Œ»İ•Û’†‚Ìcookie 
+	// ç¾åœ¨ä¿æŒä¸­ã®cookie 
 	'cookie' : '',
-	// Œ»İ•Û’†‚Ìparam 
+	// ç¾åœ¨ä¿æŒä¸­ã®param 
 	'param' : '',
-	// í‚É•Û‚³‚ê‚éparam 
+	// å¸¸ã«ä¿æŒã•ã‚Œã‚‹param 
 	'base_param' : '',
 	// auto adjust flag 
 	'auto_adjust' : true,
@@ -84,7 +84,7 @@ mist.page = {
 			}
 		}
 	],
-	// ƒtƒBƒ‹ƒ^‚Ì’Ç‰Á 
+	// ãƒ•ã‚£ãƒ«ã‚¿ã®è¿½åŠ  
 	'add_filter' : function _t_mist_page_add_filter (regexp, exec) {
 		// regexp == filter object 
 		if (!$.ifFunction(exec)) return this.filter.push(regexp);
@@ -95,7 +95,7 @@ mist.page = {
 	},
 	'get' : function _t_mist_page_get (path) {
 		this.path = path;
-		$os.get(path, $.extend(this.param, this.base_param), this.load);
+		$os.get(mist.conf.api_url + path, $.extend(this.param, this.base_param), this.load);
 	},
 	'load' : function _t_mist_page_load (data) {
 		this.data = data;
@@ -121,39 +121,39 @@ mist.page = {
 		$os.adjustHeight();
 		$('img').load(function(){ $os.adjustHeight(); });
 	}
-};
+});
 
-mist.env = {
+$.extend(mist.env, {
 	'app_id' : gadgets.util.getUrlParameters()['app_id'],
-	// ƒAƒvƒŠî•ñ•\¦‰æ–Ê 
+	// ã‚¢ãƒ—ãƒªæƒ…å ±è¡¨ç¤ºç”»é¢ 
 	'view_appli' : 'http://mixi.jp/view_appli.pl?id=',
-	// ƒAƒvƒŠƒCƒ“ƒXƒg[ƒ‹‰æ–Ê 
+	// ã‚¢ãƒ—ãƒªã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ç”»é¢ 
 	'join_appli' : 'http://mixi.jp/join_appli.pl?id=',
-	// ƒAƒvƒŠƒLƒƒƒ“ƒoƒX‰æ–Ê 
+	// ã‚¢ãƒ—ãƒªã‚­ãƒ£ãƒ³ãƒã‚¹ç”»é¢ 
 	'run_appli' : 'http://mixi.jp/run_appli.pl?id=',
-	// “Ç‚İ‚İ’†Šm”Fitrue‚Ìê‡Ao—Í‚ğ’x‰„‚·‚éj 
+	// èª­ã¿è¾¼ã¿ä¸­ç¢ºèªï¼ˆtrueã®å ´åˆã€å‡ºåŠ›ã‚’é…å»¶ã™ã‚‹ï¼‰ 
 	'is_loading' : function () {
 		return this.loading_queue.length;
 	},
 	'loading_queue' : []
-};
+});
 
-mist.conf = {
-	// ƒI[ƒi[‚ÉƒAƒvƒŠ‚ÌŠ—L‚ğ—v‹‚·‚é 
-	// iŠ—L‚µ‚Ä‚¢‚È‚¢ê‡A‚±‚ÌURL‚Öapp_id‚ğ’Ç‰Á‚µ‚ÄˆÚ“®j 
+$.extend(mist.conf, {
+	// ã‚ªãƒ¼ãƒŠãƒ¼ã«ã‚¢ãƒ—ãƒªã®æ‰€æœ‰ã‚’è¦æ±‚ã™ã‚‹ 
+	// ï¼ˆæ‰€æœ‰ã—ã¦ã„ãªã„å ´åˆã€ã“ã®URLã¸app_idã‚’è¿½åŠ ã—ã¦ç§»å‹•ï¼‰ 
 	'OWNER_REQUIRE_APP_URL' : mist.env.join_appli + app_id,
-	// ƒrƒ…ƒA[‚ÉƒAƒvƒŠ‚ÌŠ—L‚ğ—v‹‚·‚é 
-	// iŠ—L‚µ‚Ä‚¢‚È‚¢ê‡A‚±‚ÌURL‚Öapp_id‚ğ’Ç‰Á‚µ‚ÄˆÚ“®j 
+	// ãƒ“ãƒ¥ã‚¢ãƒ¼ã«ã‚¢ãƒ—ãƒªã®æ‰€æœ‰ã‚’è¦æ±‚ã™ã‚‹ 
+	// ï¼ˆæ‰€æœ‰ã—ã¦ã„ãªã„å ´åˆã€ã“ã®URLã¸app_idã‚’è¿½åŠ ã—ã¦ç§»å‹•ï¼‰ 
 	'VIEWER_REQUIRE_APP_URL' : mist.env.join_appli + app_id,
-	// ƒI[ƒi[‚Æƒrƒ…ƒA[‚ª“¯‚¶‚Å‚ ‚é‚±‚Æ‚ğ—v‹‚·‚é 
-	// iŠ—L‚µ‚Ä‚¢‚È‚¢ê‡A‚±‚ÌURL‚Öapp_id‚ğ’Ç‰Á‚µ‚ÄˆÚ“®j 
+	// ã‚ªãƒ¼ãƒŠãƒ¼ã¨ãƒ“ãƒ¥ã‚¢ãƒ¼ãŒåŒã˜ã§ã‚ã‚‹ã“ã¨ã‚’è¦æ±‚ã™ã‚‹ 
+	// ï¼ˆæ‰€æœ‰ã—ã¦ã„ãªã„å ´åˆã€ã“ã®URLã¸app_idã‚’è¿½åŠ ã—ã¦ç§»å‹•ï¼‰ 
 	'REQUIRE_OWNER_EQ_VIEWER_URL' : mist.env.run_appli + app_id,
-	// ƒI[ƒi[‚Æƒrƒ…ƒA[‚ª“¯‚¶‚Å‚ ‚é‚±‚Æ‚ğ—v‹‚·‚é 
-	// iŠ—L‚µ‚Ä‚¢‚È‚¢ê‡A‚±‚ÌURL‚Öapp_id‚ğ’Ç‰Á‚µ‚ÄˆÚ“®j 
+	// ã‚ªãƒ¼ãƒŠãƒ¼ã¨ãƒ“ãƒ¥ã‚¢ãƒ¼ãŒåŒã˜ã§ã‚ã‚‹ã“ã¨ã‚’è¦æ±‚ã™ã‚‹ 
+	// ï¼ˆæ‰€æœ‰ã—ã¦ã„ãªã„å ´åˆã€ã“ã®URLã¸app_idã‚’è¿½åŠ ã—ã¦ç§»å‹•ï¼‰ 
 	'REQUIRE_OWNER_EQ_VIEWER_URL' : mist.env.run_appli + app_id,
-};
+});
 
-mist.social = {
+$.extend(mist.social, {
 	'person' : {
 		'OWNER' : {},
 		'VIEWER' : {}
@@ -190,9 +190,9 @@ mist.social = {
 		};
 		$os.getFriends(param);
 	}
-};
+});
 
-mist.auth = (function _t_mist_auth () {
+$.extend(mist.auth, (function _t_mist_auth () {
 	var app_id = this.env.app_id;
 	return {
 		'check' : function _t_mist_auth_check () {
@@ -220,23 +220,23 @@ mist.auth = (function _t_mist_auth () {
 			return mist.conf[user+'_REQUIRE_APP'];
 		};
 	};
-})();
+})());
 
-mist.event = {
+$.extend(mist.event, {
 	'link' : function _t_mist_event_link (env) {
 		if (env.button) return;
 		env.preventDefault();
 		var href = $(this).get_local_path('href');
-		// ‘Š‘Îw’è‚ÍAPIƒAƒNƒZƒX 
+		// ç›¸å¯¾æŒ‡å®šã¯APIã‚¢ã‚¯ã‚»ã‚¹ 
 		if (href.match(mosix('^/'))) return mist.page.get(href);
-		// mixi“àƒŠƒ“ƒN 
+		// mixiå†…ãƒªãƒ³ã‚¯ 
 		if (href.match(mosix('^http://mixi\.jp/'))) return window.open(href, $(this).attr('target') || '_top');
-		// u#vŠJn‚Íƒgƒbƒv‚Ö‰æ–Ê‘JˆÚ 
+		// ã€Œ#ã€é–‹å§‹ã¯ãƒˆãƒƒãƒ—ã¸ç”»é¢é·ç§» 
 		if (href.match(mosix('^/?#'))) return mist.page.adjust();
-		// ŠO•”ƒŠƒ“ƒN 
+		// å¤–éƒ¨ãƒªãƒ³ã‚¯ 
 		if (href.match(mosix('^http://'))) return mixi.util.requestExternalNavigateTo(href);
 
-		throw(' mist : ”F¯‚Å‚«‚È‚¢URLŒ`®‚Å‚· ');
+		throw(' mist : èªè­˜ã§ããªã„URLå½¢å¼ã§ã™ ');
 	},
 	'form' : function _t_mist_event_form () {
 		var action = $(this).get_local_path('action');
@@ -248,17 +248,17 @@ mist.event = {
 		mist.page.path = action;
 
 		$os.ajax({
-			'url' : action,
+			'url' : mist.conf.api_url + action,
 			'success' : mist.page.load;,
 			'METHOD' : method,
 			'CONTENT_TYPE' : 'TEXT',
 			'data' : param
 		});
 	}
-};
+});
 
 
-mist.utils = {
+$.extend(mist.utils, {
 	'parse_param' : function _t_mist_utils_parse_param (param) {
 		var result = {};
 		$.each(param.split(/\s+/), function () {
@@ -267,10 +267,10 @@ mist.utils = {
 		});
 		return result;
 	}
-};
+});
 
 /*
-	³‹K•\Œ»‘g‚İ—§‚Ä
+	æ­£è¦è¡¨ç¾çµ„ã¿ç«‹ã¦
 */
 var create_regexp = function (arg, option) {
 	arg = Array.prototype.slice.call(arg)
