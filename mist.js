@@ -78,14 +78,15 @@ $.extend(mist.page = {}, {
 		{
 			'name' : 'friends',
 			'exec' : function _t_mist_page_filter_friends () {
-				this.data.match(/[%friends(.*?)%]/, function (param) {
-					var params = mist.utils.parse_param(param);
-					if (!params.filter) params.filter = 'HAS_APP';
-					params.callback = function () {
-						this.data = this.data.replace(/[%friends(.*?)%]/g, mist.social.friends.join(','));
-					};
-					return mist.social.load_friends(params);
-				});
+				var match = this.data.match(/\[%friends(.*?)%\]/);
+				if (!match) return;
+				var params = match.length !== 1 ? mist.utils.parse_param(match.pop()) : {};
+				params.filter = params.filter ? params.filter.toUpperCase() : 'HAS_APP';
+				var self = this;
+				params.callback = function () {
+					self.data = self.data.replace(/\[%friends(.*?)%\]/g, mist.social.friends.join(','));
+				};
+				mist.social.load_friends(params);
 			}
 		}
 	],

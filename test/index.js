@@ -8,5 +8,9 @@ mist.event.add_complate(/1_profile.html/, function (match) {
 });
 mist.event.add_complate(/2_friend.html/, function (match) {
 	if ($('#mist_content').text().match(/\[%/)) console.error(match);
-//	mist.page.get('/3_paginate.html');
+	mist.page.get('/3_paginate.html');
+});
+mist.event.add_complate(/3_paginate.html/, function (match) {
+	if ($('#mist_content').text().match(/\[%/)) console.error(match);
+	mist.page.get('/3_paginate.html');
 });
