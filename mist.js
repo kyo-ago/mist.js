@@ -119,14 +119,14 @@ $.extend(mist.page = {}, {
 				this.exec.call(self, match);
 			} catch (e) { console.warn(e, this.name); };
 		});
-		var self = this;
 		$(function () {
 			if (!mist.env.is_loading()) $('#mist_content').html(self.data);
 			var timer = setInterval(function () {
 				if (mist.env.is_loading()) return;
+				clearInterval(timer);
 				$('#mist_content').html(self.data);
 				mist.event.call_complate();
-				clearInterval(timer);
+				self.adjust();
 			}, 100);
 		});
 	},
