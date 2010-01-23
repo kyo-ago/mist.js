@@ -64,25 +64,25 @@ $.extend(mist.page = {}, {
 			// filter name(optional) 
 			'name' : 'app_id',
 			'exec' : function _t_mist_page_filter_app_id () {
-				this.data = this.data.replace(mosix('[%app_id\s*%]'), mist.env.app_id);
+				this.data = this.data.replace(/\[%app_id\s*%\]/g, mist.env.app_id);
 			}
 		},
 		{
 			'name' : 'person',
 			'exec' : function _t_mist_page_filter_person () {
-				this.data = this.data.replace(mosix('[%(OWNER|VIEWER)\s+field="(\w+)"\s*%]'), function (name, field) {
-					return mist.social.person[name][field];
+				this.data = this.data.replace(/\[%(OWNER|VIEWER)\s+field="(\w+)"\s*%\]/g, function (_, name, field) {
+					return mist.social.person[name][field] || mist.social.person[name][field.toUpperCase()];
 				});
 			}
 		},
 		{
 			'name' : 'friends',
 			'exec' : function _t_mist_page_filter_friends () {
-				this.data.match(mosix('[%friends(.+?)%]'), function (param) {
+				this.data.match(/[%friends(.*?)%]/, function (param) {
 					var params = mist.utils.parse_param(param);
 					if (!params.filter) params.filter = 'HAS_APP';
 					params.callback = function () {
-						this.data = this.data.replace(mosix('[%friends(.+?)%]'), mist.social.friends.join(','));
+						this.data = this.data.replace(/[%friends(.*?)%]/g, mist.social.friends.join(','));
 					};
 					return mist.social.load_friends(params);
 				});
@@ -100,7 +100,10 @@ $.extend(mist.page = {}, {
 	},
 	'get' : function _t_mist_page_get (path) {
 		this.path = path;
-		$os.get(mist.conf.api_url + path, $.extend(this.param, this.base_param), this.load);
+		var self = this;
+		$os.get(mist.conf.api_url + path, $.extend(this.param, this.base_param), function () {
+			self.load.apply(self, arguments);
+		});
 	},
 	'load' : function _t_mist_page_load (data) {
 		this.data = data;
@@ -108,17 +111,21 @@ $.extend(mist.page = {}, {
 		var filter = this.filter;
 		var self = this;
 		$.each(filter, function () {
-			if (!this.path_regexp) return this.exec.call(self, match);
-			var match = path.match(this.path_regexp);
-			if (!match) return;
-			this.exec.call(self, match);
+			try {
+				if (!this.path_regexp) return this.exec.call(self, match);
+				var match = path.match(this.path_regexp);
+				if (!match) return;
+				this.exec.call(self, match);
+			} catch (e) { console.warn(e, this.name); };
 		});
 		var self = this;
 		$(function () {
 			if (!mist.env.is_loading()) $('#mist_content').html(self.data);
-			setInterval(function () {
+			var timer = setInterval(function () {
 				if (mist.env.is_loading()) return;
 				$('#mist_content').html(self.data);
+				mist.event.call_complate();
+				clearInterval(timer);
 			}, 100);
 		});
 	},
@@ -226,6 +233,9 @@ $.extend(mist.auth = {}, (function _t_mist_auth () {
 })());
 
 $.extend(mist.event = {}, {
+	// 各ページの読み込み完了時event 
+	// [ { 'name' : '', 'path_regexp' : '', 'exec' : function () {} },... ]
+	'complate' : [],
 	'link' : function _t_mist_event_link (env) {
 		if (env.button) return;
 		env.preventDefault();
@@ -257,6 +267,36 @@ $.extend(mist.event = {}, {
 			'CONTENT_TYPE' : 'TEXT',
 			'data' : param
 		});
+	},
+	// フィルタの追加 
+	'add_filter' : function _t_mist_page_add_filter (regexp, exec) {
+		// regexp == filter object 
+		if (!$.isFunction(exec)) return this.filter.push(regexp);
+		this.filter.push({
+			'path_regexp' : regexp,
+			'exec' : exec
+		});
+	},
+
+	'add_complate' : function _t_mist_event_add_complate (regexp, exec) {
+		if (arguments.length === 1) return this.complate.push(regexp);
+		this.complate.push({
+			'path_regexp' : regexp,
+			'exec' : exec
+		});
+	},
+	'call_complate' : function _t_mist_event_call_complate () {
+		var path = mist.page.path;
+		var complate = this.complate;
+		var self = this;
+		$.each(complate, function () {
+			try {
+				if (!this.path_regexp) return this.exec.call(self, match);
+				var match = path.match(this.path_regexp);
+				if (!match) return;
+				this.exec.call(self, match);
+			} catch (e) { console.warn(e); };
+		});
 	}
 });
 
@@ -279,7 +319,7 @@ function String_get_inner_text (str, start, end) {
 	parts.shift();
 	parts = parts.join('').split(end);
 	parts.pop();
-	return parts.joint('');
+	return parts.join('');
 };
 
 /*
