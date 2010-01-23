@@ -13,6 +13,8 @@
 
 if (!window.mist) window.mist = {};
 
+if (!window.$os) $os = $.opensocial_simple;
+
 /*
 	初期化
 */
@@ -27,7 +29,7 @@ mist.init = function _t_mist_init () {
 
 	$(function () {
 		// /の読み込み 
-		this.page.get('/');
+		mist.page.get('/index.html');
 
 		// 追加対象タグの設定 
 		if (!$('#mist_content').length) $('body').append('<div id="mist_content">');
@@ -37,7 +39,7 @@ mist.init = function _t_mist_init () {
 /*
 	ページ遷移関係
 */
-$.extend(mist.page, {
+$.extend(mist.page = {}, {
 	// 現在表示中のpath 
 	'path' : '',
 	// 現在保持中のcookie 
@@ -55,7 +57,7 @@ $.extend(mist.page, {
 			// filter name(optional) 
 			'name' : 'strip_mist_content',
 			'exec' : function _t_mist_page_filter_strip_mist_content () {
-				this.data = this.data.get_inner_text('<div id="mist_content">', '</div><!-- /#div -->') || this.data;
+				this.data = String_get_inner_text(this.data, '<div id="mist_content">', '</div><!-- /#div -->') || this.data;
 			}
 		},
 		{
@@ -127,7 +129,7 @@ $.extend(mist.page, {
 	}
 });
 
-$.extend(mist.env, {
+$.extend(mist.env = {}, {
 	'app_id' : gadgets.util.getUrlParameters()['app_id'],
 	// アプリ情報表示画面 
 	'view_appli' : 'http://mixi.jp/view_appli.pl?id=',
@@ -142,26 +144,26 @@ $.extend(mist.env, {
 	'loading_queue' : []
 });
 
-$.extend(mist.conf, {
+$.extend(mist.conf = {}, {
 	// オーナーにアプリの所有を要求する 
 	// （所有していない場合、このURLへapp_idを追加して移動） 
-	'OWNER_REQUIRE_APP_URL' : mist.env.join_appli + app_id,
+	'OWNER_REQUIRE_APP_URL' : mist.env.join_appli + mist.env.app_id,
 	// ビュアーにアプリの所有を要求する 
 	// （所有していない場合、このURLへapp_idを追加して移動） 
-	'VIEWER_REQUIRE_APP_URL' : mist.env.join_appli + app_id,
+	'VIEWER_REQUIRE_APP_URL' : mist.env.join_appli + mist.env.app_id,
 	// オーナーとビュアーが同じであることを要求する 
 	// （所有していない場合、このURLへapp_idを追加して移動） 
-	'REQUIRE_OWNER_EQ_VIEWER_URL' : mist.env.run_appli + app_id
+	'REQUIRE_OWNER_EQ_VIEWER_URL' : mist.env.run_appli + mist.env.app_id
 });
 
-$.extend(mist.social, {
+$.extend(mist.social = {}, {
 	'person' : {
 		'OWNER' : {},
 		'VIEWER' : {}
 	},
 	'friends' : [],
 	'cache' : {},
-	'load_person' function _t_mist_social_load_person () {
+	'load_person' : function _t_mist_social_load_person () {
 		var self = this;
 		mist.env.loading_queue.push('');
 		$os.getPerson('all_field_set', function (p) {
@@ -193,8 +195,8 @@ $.extend(mist.social, {
 	}
 });
 
-$.extend(mist.auth, (function _t_mist_auth () {
-	var app_id = this.env.app_id;
+$.extend(mist.auth = {}, (function _t_mist_auth () {
+	var app_id = mist.env.app_id;
 	return {
 		'check' : function _t_mist_auth_check () {
 			$.each(['OWNER_REQUIRE_APP', 'VIEWER_REQUIRE_APP', 'REQUIRE_OWNER_EQ_VIEWER'], function () {
@@ -223,7 +225,7 @@ $.extend(mist.auth, (function _t_mist_auth () {
 	};
 })());
 
-$.extend(mist.event, {
+$.extend(mist.event = {}, {
 	'link' : function _t_mist_event_link (env) {
 		if (env.button) return;
 		env.preventDefault();
@@ -250,7 +252,7 @@ $.extend(mist.event, {
 
 		$os.ajax({
 			'url' : mist.conf.api_url + action,
-			'success' : mist.page.load;,
+			'success' : mist.page.load,
 			'METHOD' : method,
 			'CONTENT_TYPE' : 'TEXT',
 			'data' : param
@@ -259,7 +261,7 @@ $.extend(mist.event, {
 });
 
 
-$.extend(mist.utils, {
+$.extend(mist.utils = {}, {
 	// query_stringの分解 
 	'parse_param' : function _t_mist_utils_parse_param (param) {
 		var result = {};
@@ -272,8 +274,8 @@ $.extend(mist.utils, {
 });
 
 // 正規表現で指定された中間部分の取得 
-String.prootype.get_inner_text = function String_prootype_get_inner_text (start, end) {
-	var parts = this.split(start);
+function String_get_inner_text (str, start, end) {
+	var parts = str.split(start);
 	parts.shift();
 	parts = parts.join('').split(end);
 	parts.pop();
