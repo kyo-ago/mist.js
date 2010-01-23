@@ -53,16 +53,20 @@ $.extend(mist.page, {
 	'filter' : [
 		{
 			// filter name(optional) 
+			'name' : 'strip_mist_content',
+			'exec' : function _t_mist_page_filter_strip_mist_content () {
+				this.data = this.data.get_inner_text('<div id="mist_content">', '</div><!-- /#div -->') || this.data;
+			}
+		},
+		{
+			// filter name(optional) 
 			'name' : 'app_id',
-			// execute path(regexp) 
-			'path_regexp' : /(?:)/,
 			'exec' : function _t_mist_page_filter_app_id () {
 				this.data = this.data.replace(mosix('[%app_id\s*%]'), mist.env.app_id);
 			}
 		},
 		{
 			'name' : 'person',
-			'path_regexp' : /(?:)/,
 			'exec' : function _t_mist_page_filter_person () {
 				this.data = this.data.replace(mosix('[%(OWNER|VIEWER)\s+field="(\w+)"\s*%]'), function (name, field) {
 					return mist.social.person[name][field];
@@ -71,7 +75,6 @@ $.extend(mist.page, {
 		},
 		{
 			'name' : 'friends',
-			'path_regexp' : /(?:)/,
 			'exec' : function _t_mist_page_filter_friends () {
 				this.data.match(mosix('[%friends(.+?)%]'), function (param) {
 					var params = mist.utils.parse_param(param);
@@ -87,7 +90,7 @@ $.extend(mist.page, {
 	// フィルタの追加 
 	'add_filter' : function _t_mist_page_add_filter (regexp, exec) {
 		// regexp == filter object 
-		if (!$.ifFunction(exec)) return this.filter.push(regexp);
+		if (!$.isFunction(exec)) return this.filter.push(regexp);
 		this.filter.push({
 			'path_regexp' : regexp,
 			'exec' : exec
@@ -103,6 +106,7 @@ $.extend(mist.page, {
 		var filter = this.filter;
 		var self = this;
 		$.each(filter, function () {
+			if (!this.path_regexp) return this.exec.call(self, match);
 			var match = path.match(this.path_regexp);
 			if (!match) return;
 			this.exec.call(self, match);
@@ -147,10 +151,7 @@ $.extend(mist.conf, {
 	'VIEWER_REQUIRE_APP_URL' : mist.env.join_appli + app_id,
 	// オーナーとビュアーが同じであることを要求する 
 	// （所有していない場合、このURLへapp_idを追加して移動） 
-	'REQUIRE_OWNER_EQ_VIEWER_URL' : mist.env.run_appli + app_id,
-	// オーナーとビュアーが同じであることを要求する 
-	// （所有していない場合、このURLへapp_idを追加して移動） 
-	'REQUIRE_OWNER_EQ_VIEWER_URL' : mist.env.run_appli + app_id,
+	'REQUIRE_OWNER_EQ_VIEWER_URL' : mist.env.run_appli + app_id
 });
 
 $.extend(mist.social, {
@@ -259,6 +260,7 @@ $.extend(mist.event, {
 
 
 $.extend(mist.utils, {
+	// query_stringの分解 
 	'parse_param' : function _t_mist_utils_parse_param (param) {
 		var result = {};
 		$.each(param.split(/\s+/), function () {
@@ -268,6 +270,15 @@ $.extend(mist.utils, {
 		return result;
 	}
 });
+
+// 正規表現で指定された中間部分の取得 
+String.prootype.get_inner_text = function String_prootype_get_inner_text (start, end) {
+	var parts = this.split(start);
+	parts.shift();
+	parts = parts.join('').split(end);
+	parts.pop();
+	return parts.joint('');
+};
 
 /*
 	正規表現組み立て
