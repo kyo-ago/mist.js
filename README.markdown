@@ -141,3 +141,5 @@ URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが�
  * google analytics連携
  * Message API
  * Albums API
+ * Browser Cache
+ * JS API documents
