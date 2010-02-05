@@ -109,7 +109,7 @@ mist.page.add_filter([
 	{
 		'name' : 'strip_mist_content',
 		'exec' : function _t_mist_page_filter_strip_mist_content () {
-			mist.page.data = get_inner_text(mist.page.data, '<div id="mist_content">', '</div><!-- /#div -->') || mist.page.data;
+			mist.page.data = get_inner_text(mist.page.data, '<div id="mist_content">', '</div><!-- /#mist_content -->') || mist.page.data;
 		}
 	},
 	// [%app_id%]の置き換え 
