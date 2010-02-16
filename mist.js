@@ -323,27 +323,9 @@ $.extend(mist.event = {}, {
 		if (!$(this).get_local_path('href').match('/opensocial/sharefriend/')) return;
 		env.stopImmediatePropagation();
 		env.preventDefault();
-
-		var name = '_t_mist_event_requestShareApp';
 		var url = $(this).get_local_path('href');
-		// object, embedを一時的に非表示にする 
-		// （.hide()は.show()した後、IEでExIfが呼べなくなるのでだめ） 
-		$('object, embed').each(function () {
-			$(this).data(name, {
-				'width' : $(this).width(),
-				'height' : $(this).height(),
-			});
-			$(this).width(1);
-			$(this).height(1);
-		});
-		// 「友達を誘う」表示 
-		$os.requestShareApp(function (result) {
-			// object, embedを表示する 
-			$('object, embed').each(function () {
-				var size = $(this).data(name);
-				$(this).width(size.width);
-				$(this).height(size.height);
-			});
+
+		mist.utils.throw_share_app(function _t_mist_event_requestShareApp_callback (result) {
 			// 通知先URLの取得 
 			var match = url.match(/#(.+)/);
 			if (!match) return;
@@ -358,7 +340,7 @@ $.extend(mist.event = {}, {
 				if (k_v.length === 1) return;
 				params[k_v.shift()] = k_v.join('=');
 			});
-			params.recipientIds = result.getData()["recipientIds"].join(',');
+			params.recipientIds = result.join(',');
 			$os.get(url, params, function () {});
 		});
 	},
@@ -478,6 +460,31 @@ $.extend(mist.utils = {}, {
 		;
 		$os.postActivity(body, param);
 	},
+	// 「友達を誘う」の実行 
+	'throw_share_app' : function _t_mist_utils_throw_share_app (callback) {
+		var name = '_t_mist_utils_throw_share_app';
+		// object, embedを一時的に非表示にする 
+		// （.hide()は.show()した後、IEでExIfが呼べなくなるのでだめ） 
+		$('object, embed').each(function () {
+			$(this).data(name, {
+				'width' : $(this).width(),
+				'height' : $(this).height(),
+			});
+			$(this).width(1);
+			$(this).height(1);
+		});
+		// 「友達を誘う」表示 
+		$os.requestShareApp(function (result) {
+			// object, embedを表示する 
+			$('object, embed').each(function () {
+				var size = $(this).data(name);
+				$(this).width(size.width);
+				$(this).height(size.height);
+				$(this).removeData(name);
+			});
+			if ($.isFunction(callback)) callback(result.getData()["recipientIds"]);
+		});
+	},
 	// アクティビティ本文中の変数を置き換える 
 	'replace_appid_person' : function _t_mist_utils_replace_appid_person (str) {
 		str = str.replace(/\[%app_id\s*%\]/g, mist.env.app_id);
@@ -560,6 +567,10 @@ $.extend(mist.utils = {}, {
 		mist.social.load_friends(param, function () {
 			as_callback_wrapper(callback_name)(mist.social.get_friends());
 		});
+	},
+	// flash用マイミクを誘う 
+	'as_throw_share_app' : function (callback_name) {
+		this.throw_share_app(as_callback_wrapper(callback_name));
 	}
 });
 

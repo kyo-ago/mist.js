@@ -144,3 +144,5 @@ URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが�
  * Browser Cache
  * JS API documents
  * テスト支援機能
+ * facebook互換機能
+ * 携帯アプリの簡易表示機能
