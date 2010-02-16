@@ -158,7 +158,7 @@ mist.page.add_filter([
 			var params = match.length !== 1 ? parse_param(match.pop()) : {};
 			params.filter = params.filter ? params.filter.toUpperCase() : 'HAS_APP';
 			params.callback = function _t_mist_page_filter_friends_callback () {
-				mist.page.data = mist.page.data.replace(/\[%friends(.*?)%\]/g, mist.social.friends.join(','));
+				mist.page.data = mist.page.data.replace(/\[%friends(.*?)%\]/g, mist.social.get_friends_ids().join(','));
 			};
 			mist.social.load_friends(params);
 		}
@@ -228,9 +228,11 @@ $.extend(mist.social = {}, {
 	// mist.social.cacheの読み込み 
 	'load_people' : function (person, param, callback) {
 		mist.env.loading_queue.push('');
+		if ($.isFunction(param)) callback = param;
 		if ($.isFunction(param.callback)) callback = param.callback;
 		var self = this;
 		person = $.grep(person, function () { return !self.cache[this]; });
+		param.field = 'all_field_set';
 		$os.getPersonsSync(person, param, function (persons) {
 			var cache = self.cache;
 			$.each(persons, function () {
@@ -246,21 +248,33 @@ $.extend(mist.social = {}, {
 		return this.cache[id];
 	},
 	// mist.social.friendsの読み込み 
-	'load_friends' : function _t_mist_social_load_friends (param) {
+	'load_friends' : function _t_mist_social_load_friends (param, callback) {
 		if (this.friends.length) return callback();
 		mist.env.loading_queue.push('');
 		var callback = function () {};
+		if ($.isFunction(param)) callback = param;
 		if ($.isFunction(param.callback)) callback = param.callback;
 		var self = this;
+		param.field = 'all_field_set';
 		param.callback = function _t_mist_social_load_friends_callback (fr) {
 			var friends = self.friends;
 			fr.each(function (p) {
-				friends.push(p.getId());
+				var obj = mist.utils.person2obj(p);
+				cache[obj.ID] = obj;
+				friends.push(obj);
 			});
 			callback();
 			mist.env.loading_queue.pop('');
 		};
 		$os.getFriends(param);
+	},
+	// mist.social.friendsの取得 
+	'get_friends' : function () {
+		return this.friends;
+	},
+	// mist.social.friendsのid一覧取得 
+	'get_friends_ids' : function () {
+		return $.map(this.friends, function () { return this.ID });
 	}
 });
 
@@ -532,7 +546,21 @@ $.extend(mist.utils = {}, {
 	// flash用SIGNED通信API(get) 
 	'as_call_get' : as_call_template('get'),
 	// flash用SIGNED通信API(post) 
-	'as_call_post' : as_call_template('post')
+	'as_call_post' : as_call_template('post'),
+	// flash用ユーザ情報読み込み 
+	'as_load_people' : function (id_list, callback_name) {
+		mist.social.load_people(id_list, function () {
+			as_callback_wrapper(callback_name)($.map(id_list, function () {
+				return mist.social.get_people(this - 0);
+			}));
+		});
+	},
+	// flash用friend情報読み込み 
+	'as_load_friends' : function (param, callback_name) {
+		mist.social.load_friends(param, function () {
+			as_callback_wrapper(callback_name)(mist.social.get_friends());
+		});
+	}
 });
 
 // flash用SIGNED通信API(テンプレート) 
