@@ -46,7 +46,7 @@ JSを書かなくてもそこそこリッチなmixi appが作れるフレーム�
 サーバサイドから返されるhtmlはテンプレートとして解釈され、以下のような置き換えが行われます。  
 （置き換えはDOMの展開前に行うため、htmlの文法上正しいかどうかを考慮する必要はありません）
 
- * 「&lt;div id=&quot;mist_content&quot;&gt;」「&lt;/div&gt;&lt;!-- /#mist\_content --&gt;」が存在する場合、間のhtml以外は削除されます。  
+ * 「&lt;div id=&quot;mist_content&quot;&gt;」「&lt;!-- /#mist\_content --&gt;&lt;/div&gt;」が存在する場合、間のhtml以外は削除されます。  
 mixi外でコーディングの確認を行いたい場合に使用してください。  
 ただし、上記記述は文字列として解釈されるため、コメントも含めて記述してください。
  * [%app_id%]はアプリのIDへ置き換えられます。
