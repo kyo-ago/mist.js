@@ -1,12 +1,14 @@
 $.extend(mist.conf, {
 	'index_page' : '/index.html',
-	'api_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/'
+	'doc_root_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/',
+//	'api_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/'
+	'api_url' : 'http://0-9.sakura.ne.jp/js/mixiapp_framework_mist/test'
 });
 /*
 その他の設定情報
 $.extend(mist.conf, {
-	'index_page' : '/index.html',
-	'api_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/',
+	// src="/の書き換え先 
+	'doc_root_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/'
 	// オーナーにアプリの所有を要求しない 
 	'OWNER_REQUIRE_APP_URL' : undefined,
 	// ビュアーにアプリの所有を要求しない 

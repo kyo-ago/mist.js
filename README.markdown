@@ -145,4 +145,6 @@ URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが�
  * JS API documents
  * テスト支援機能
  * facebook互換機能
- * 携帯アプリの簡易表示機能
+ * リクエストを自動的にRPCでまとめて通信する機能
+ * ブラウザの「戻る」対応
+ * パーマネントリンク対応

@@ -3,9 +3,9 @@
  * Copyright (C) KAYAC Inc. | http://www.kayac.com/
  * Dual licensed under the MIT <http://www.opensource.org/licenses/mit-license.php>
  * and GPL <http://www.opensource.org/licenses/gpl-license.php> licenses.
- * Date: 2010-02-16
+ * Date: 2010-02-17
  * @author kyo_ago
- * @version 1.0.3
+ * @version 1.0.4
  * @require jQuery 1.3
  * @require jQuery opensocial-simple plugin
  * @see http://github.com/kyo-ago/mist.js
@@ -36,12 +36,24 @@ mist.init = function _t_mist_init () {
 	}) : $('form').live('submit', mist.event.form);
 
 	$(function () {
+		// フィルタのセットアップ 
+		$.each(mist.add_filters.filters, function () { this(); });
 		// /の読み込み 
 		if (mist.conf.index_page && mist.conf.api_url) mist.page.get(mist.conf.index_page || '/index.html');
 
 		// 追加対象タグの設定 
 		if (!$('#mist_content').length) $('body').append('<div id="mist_content">');
 	});
+};
+
+/*
+	フィルタを追加するフェイズ
+
+	mist objectの完成後呼ばれます
+*/
+mist.add_filters = function (filter) {
+	if (!mist.add_filters.filters) mist.add_filters.filters = [];
+	mist.add_filters.filters.push(filter);
 };
 
 /*
@@ -71,7 +83,9 @@ $.extend(mist.page = {}, {
 		var self = this;
 		$.each(path_param.join('?').split('&'), function () {
 			var k_v = this.split('=');
-			self.param[k_v.shift()] = k_v.join('=');
+			var k = k_v.shift();
+			var v = k_v.join('=');
+			if (k && v) self.param[k] = v;
 		});
 		$os.get(mist.conf.api_url + path, $.extend(this.param, this.base_param), function () {
 			self.serialize_url = self.path + '?' + $.param(self.param);
@@ -104,66 +118,76 @@ $.extend(mist.page = {}, {
 });
 // 各ページの読み込みfilter eventの追加（filter_stack, add_filter, call_filter） 
 add_stack_method(mist.page, 'filter');
-mist.page.add_filter([
-	// mist_contentの間を取る 
-	{
-		'name' : 'strip_mist_content',
-		'exec' : function _t_mist_page_filter_strip_mist_content () {
-			var tags = mist.conf.mist_page_filter_strip_mist_content_tags;
-			mist.page.data = get_inner_text(mist.page.data, tags[0] || '<div id="mist_content">', tags[1] || '<!-- /#mist_content --></div>') || mist.page.data;
-		}
-	},
-	// [%app_id%]の置き換え 
-	{
-		'name' : 'app_id',
-		'exec' : function _t_mist_page_filter_app_id () {
-			mist.page.data = mist.page.data.replace(/\[%app_id\s*%\]/g, mist.env.app_id);
-		}
-	},
-	// [%(OWNER|VIEWER) field="(\w+)"%]の置き換え 
-	{
-		'name' : 'person',
-		'exec' : function _t_mist_page_filter_person () {
-			mist.page.data = mist.page.data.replace(/\[%(OWNER|VIEWER)\s+field="(\w+)"\s*%\]/g, function (_, name, field) {
-				return mist.social.person[name][field] || mist.social.person[name][field.toUpperCase()];
-			});
-		}
-	},
-	// [%people id="(\d+)" field="(\w+)"%]の置き換え 
-	{
-		'name' : 'people',
-		'exec' : function _t_mist_page_filter_people () {
-			var match = mist.page.data.match(/\[%people.+?%\]/g);
-			if (!match) return;
-			var person = $.map(match, function (m) {
-				var attr = m.match(/\s(.+?)%\]/);
-				return parse_param(attr.pop()).id;
-			});
-			mist.social.load_people(person, {
-				'field' : 'all_field_set'
-			}, function _t_mist_page_filter_people_callback () {
-				mist.page.data = mist.page.data.replace(/\[%people(.*?)%\]/g, function (_, attr) {
-					var param = parse_param(attr);
-					return mist.social.get_people(param.id)[param.field.toUpperCase()];
+mist.add_filters(function () {
+	mist.page.add_filter([
+		// mist_contentの間を取る 
+		{
+			'name' : 'strip_mist_content',
+			'exec' : function _t_mist_page_filter_strip_mist_content () {
+				var tags = mist.conf.mist_page_filter_strip_mist_content_tags || ['<div id="mist_content">', '<!-- /#mist_content --><\/div>'];
+				mist.page.data = get_inner_text(mist.page.data, tags[0], tags[1]) || mist.page.data;
+			}
+		},
+		// [%app_id%]の置き換え 
+		{
+			'name' : 'app_id',
+			'exec' : function _t_mist_page_filter_app_id () {
+				mist.page.data = mist.page.data.replace(/\[%app_id\s*%\]/g, mist.env.app_id);
+			}
+		},
+		// [%(OWNER|VIEWER) field="(\w+)"%]の置き換え 
+		{
+			'name' : 'person',
+			'exec' : function _t_mist_page_filter_person () {
+				mist.page.data = mist.page.data.replace(/\[%(OWNER|VIEWER)\s+field="(\w+)"\s*%\]/g, function (_, name, field) {
+					return mist.social.person[name][field] || mist.social.person[name][field.toUpperCase()];
 				});
-			});
+			}
+		},
+		// [%people id="(\d+)" field="(\w+)"%]の置き換え 
+		{
+			'name' : 'people',
+			'exec' : function _t_mist_page_filter_people () {
+				var match = mist.page.data.match(/\[%people.+?%\]/g);
+				if (!match) return;
+				var person = $.map(match, function (m) {
+					var attr = m.match(/\s(.+?)%\]/);
+					return parse_param(attr.pop()).id;
+				});
+				mist.social.load_people(person, {
+					'field' : 'all_field_set'
+				}, function _t_mist_page_filter_people_callback () {
+					mist.page.data = mist.page.data.replace(/\[%people(.*?)%\]/g, function (_, attr) {
+						var param = parse_param(attr);
+						return mist.social.get_people(param.id)[param.field.toUpperCase()];
+					});
+				});
+			}
+		},
+		// [%friends filter="(\w+)"%]の置き換え 
+		{
+			'name' : 'friends',
+			'exec' : function _t_mist_page_filter_friends () {
+				var match = mist.page.data.match(/\[%friends(.*?)%\]/);
+				if (!match) return;
+				var params = match.length !== 1 ? parse_param(match.pop()) : {};
+				params.filter = params.filter ? params.filter.toUpperCase() : 'HAS_APP';
+				params.callback = function _t_mist_page_filter_friends_callback () {
+					mist.page.data = mist.page.data.replace(/\[%friends(.*?)%\]/g, mist.social.get_friends_ids().join(','));
+				};
+				mist.social.load_friends(params);
+			}
 		}
-	},
-	// [%friends filter="(\w+)"%]の置き換え 
-	{
-		'name' : 'friends',
-		'exec' : function _t_mist_page_filter_friends () {
-			var match = mist.page.data.match(/\[%friends(.*?)%\]/);
-			if (!match) return;
-			var params = match.length !== 1 ? parse_param(match.pop()) : {};
-			params.filter = params.filter ? params.filter.toUpperCase() : 'HAS_APP';
-			params.callback = function _t_mist_page_filter_friends_callback () {
-				mist.page.data = mist.page.data.replace(/\[%friends(.*?)%\]/g, mist.social.get_friends_ids().join(','));
-			};
-			mist.social.load_friends(params);
+	]);
+
+	// /から始まる画像urlの修正 
+	if (mist.conf.doc_root_url) mist.page.add_filter({
+		'name' : 'doc_root_url',
+		'exec' : function _t_mist_page_filter_doc_root_url () {
+			mist.page.data = mist.page.data.replace(/(src=['"])\//g, '$1'+mist.conf.doc_root_url+'/');
 		}
-	}
-]);
+	});
+});
 
 /*
 	環境変数的なもの
@@ -228,10 +252,16 @@ $.extend(mist.social = {}, {
 	// mist.social.cacheの読み込み 
 	'load_people' : function (person, param, callback) {
 		mist.env.loading_queue.push('');
-		if ($.isFunction(param)) callback = param;
-		if ($.isFunction(param.callback)) callback = param.callback;
+		if ($.isFunction(param)) {
+			callback = param;
+			param = {};
+		};
+		if ($.isFunction(param.callback)) {
+			callback = param.callback;
+			delete param.callback;
+		};
 		var self = this;
-		person = $.grep(person, function () { return !self.cache[this]; });
+		person = $.grep(person, function (id) { return !self.cache[id]; });
 		param.field = 'all_field_set';
 		$os.getPersonsSync(person, param, function (persons) {
 			var cache = self.cache;
@@ -245,7 +275,7 @@ $.extend(mist.social = {}, {
 	},
 	// mist.social.cacheの取得 
 	'get_people' : function (id) {
-		return this.cache[id];
+		return this.cache[id-0];
 	},
 	// mist.social.friendsの読み込み 
 	'load_friends' : function _t_mist_social_load_friends (param, callback) {
@@ -258,6 +288,7 @@ $.extend(mist.social = {}, {
 		param.field = 'all_field_set';
 		param.callback = function _t_mist_social_load_friends_callback (fr) {
 			var friends = self.friends;
+			var cache = self.cache;
 			fr.each(function (p) {
 				var obj = mist.utils.person2obj(p);
 				cache[obj.ID] = obj;
@@ -384,7 +415,7 @@ $.extend(mist.event = {}, {
 		throw new Error(' mist : 認識できないURL形式です ' + href);
 	},
 	// submit処理 
-	'form' : function _t_mist_event_form () {
+	'form' : function _t_mist_event_form (env) {
 		if (env.isImmediatePropagationStopped()) return;
 		env.preventDefault();
 
@@ -557,8 +588,8 @@ $.extend(mist.utils = {}, {
 	// flash用ユーザ情報読み込み 
 	'as_load_people' : function (id_list, callback_name) {
 		mist.social.load_people(id_list, function () {
-			as_callback_wrapper(callback_name)($.map(id_list, function () {
-				return mist.social.get_people(this - 0);
+			as_callback_wrapper(callback_name)($.map(id_list, function (id) {
+				return mist.social.get_people(id);
 			}));
 		});
 	},

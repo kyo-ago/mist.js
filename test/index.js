@@ -35,3 +35,19 @@ mist.event.add_complate(/7_people.html/, function (match) {
 	if ($('#mist_content').text().match(/\[%/)) console.error(match);
 	mist.page.get('/8_requestShareApp.html');
 });
+mist.event.add_complate(/8_requestShareApp.html/, function (match) {
+	var call_error = function () { console.error(match); };
+	var req = opensocial.requestShareApp;
+	opensocial.requestShareApp = function () {
+		var callback = arguments[2];
+		call_error = function () {};
+		mist.page.get('/9_docrooturl.html');
+	};
+	$('a').click();
+	setTimeout(call_error, 100);
+});
+mist.event.add_complate(/9_docrooturl.html/, function (match) {
+	var src = $('img').attr('src');
+	if (src.indexOf(mist.conf.doc_root_url) === -1) console.error(match);
+	
+});
