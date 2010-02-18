@@ -494,13 +494,15 @@ $.extend(mist.utils = {}, {
 	// 「友達を誘う」の実行 
 	'throw_share_app' : function _t_mist_utils_throw_share_app (callback) {
 		var name = '_t_mist_utils_throw_share_app';
-		// object, embedを一時的に非表示にする 
-		// （.hide()は.show()した後、IEでExIfが呼べなくなるのでだめ） 
+		var data;
 		$('object, embed').each(function () {
-			$(this).data(name, {
+			// object, embedを一時的に非表示にする 
+			// （.hide()は.show()した後、IEでExIfが呼べなくなるのでだめ） 
+			data = {
 				'width' : $(this).width(),
 				'height' : $(this).height(),
-			});
+			};
+			$.data(this, name, data);
 			$(this).width(1);
 			$(this).height(1);
 		});
@@ -508,10 +510,10 @@ $.extend(mist.utils = {}, {
 		$os.requestShareApp(function (result) {
 			// object, embedを表示する 
 			$('object, embed').each(function () {
-				var size = $(this).data(name);
+				var size = $.data(this, name) || data;
 				$(this).width(size.width);
 				$(this).height(size.height);
-				$(this).removeData(name);
+				$.removeData(this, name);
 			});
 			if ($.isFunction(callback)) callback(result.getData()["recipientIds"]);
 		});
@@ -564,7 +566,7 @@ $.extend(mist.utils = {}, {
 			if (key === 'DATE_OF_BIRTH') {
 				result[this+'_MONTH'] = result[this].getMonth() + 1;
 				result[this+'_DAY'] = result[this].getDate();
-				result[this+'_MONTH'] < 10 ? result[this+'_0MONTH'] = '0' + result[this+'_MONTH'] : result[this+'_MONTH'];
+				result[this+'_0MONTH'] = result[this+'_MONTH'] < 10 ? '0' + result[this+'_MONTH'] : result[this+'_MONTH'];
 				result[this+'_0DAY'] = result[this+'_DAY'] < 10 ? '0' + result[this+'_DAY'] : result[this+'_DAY'];
 				// '\u6708' == '月', '\u65e5' == '日' 
 				result[this+'_TEXT'] = result[this+'_0MONTH'] + '\u6708' + result[this+'_0DAY'] + '\u65e5';
@@ -589,14 +591,17 @@ $.extend(mist.utils = {}, {
 	'as_load_people' : function (id_list, callback_name) {
 		mist.social.load_people(id_list, function () {
 			as_callback_wrapper(callback_name)($.map(id_list, function (id) {
-				return mist.social.get_people(id);
+				return toLowerCaseKey(mist.social.get_people(id));
 			}));
 		});
 	},
 	// flash用friend情報読み込み 
 	'as_load_friends' : function (param, callback_name) {
 		mist.social.load_friends(param, function () {
-			as_callback_wrapper(callback_name)(mist.social.get_friends());
+			var fr = mist.social.get_friends();
+			as_callback_wrapper(callback_name)($.map(fr, function (usr) {
+				return toLowerCaseKey(usr);
+			}));
 		});
 	},
 	// flash用マイミクを誘う 
@@ -616,6 +621,15 @@ function as_call_template (method) {
 		$os[method](url, data, as_callback_wrapper(callback), type);
 		$os.ajaxSettings.AUTHORIZATION = undefined;
 	};
+};
+
+// keyをすべて小文字化 
+function toLowerCaseKey (obj) {
+	var result = {};
+	$.each(obj, function (key, val) {
+		result[key.toLowerCase()] = val;
+	});
+	return result;
 };
 
 // flash呼び出し用callback wrapper 
