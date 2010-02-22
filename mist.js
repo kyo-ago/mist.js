@@ -80,16 +80,22 @@ $.extend(mist.page = {}, {
 	'get' : function _t_mist_page_get (path) {
 		var path_param = path.split('?');
 		mist.page.path = path_param.shift();
-		var self = mist.page;
 		$.extend(self.param, parse_query_param(path_param.join('?')));
+		mist.page.throw_request('GET');
+	},
+	// サーバを呼び出して結果をloadへ渡す 
+	'throw_request' : function _t_mist_page_throw_request (method) {
+		var self = mist.page;
 		var cookie = $.param(mist.page.cookie);
 		$os.ajax({
-			'url' : mist.conf.api_url + path, 
+			'url' : mist.conf.api_url + mist.page.path, 
 			'data' : $.extend(mist.page.param, mist.page.base_param),
-			'METHOD' : 'GET',
-			'HEADERS' : cookie ? undefined : { 'Cookie' : cookie },
-			'success' : function _t_mist_page_get_success () {
-				self.serialize_url = self.path + '?' + $.param(self.param);
+			'METHOD' : method.toUpperCase(),
+			'HEADERS' : cookie ? { 'Cookie' : cookie } : undefined,
+			'success' : function _t_mist_page_throw_request_success () {
+				self.serialize_url = self.path;
+				var param = $.param(self.param);
+				if (param) self.serialize_url += (self.serialize_url.match(/\?/) ? '&' : '?') + param;
 				self.param = {};
 				self.load.apply(self, arguments);
 			}
@@ -137,7 +143,9 @@ mist.add_filters(function () {
 		{
 			'name' : 'get_cookie',
 			'exec' : function _t_mist_page_filter_get_cookie () {
-				var header = mist.page.data.split('</html>').pop();
+				var header = mist.page.data.split('<\/html>');
+				header.shift();
+				header = header.shift();
 				if (!header) return;
 				var cookie = header.match(/set-cookie:\s*(.+?)\s*;/i);
 				if (!cookie) return;
@@ -441,22 +449,14 @@ $.extend(mist.event = {}, {
 		if (env.isImmediatePropagationStopped()) return;
 		env.preventDefault();
 
-		var action = $(this).get_local_path('action');
-		var method = ($(this).attr('method') || 'GET').toUpperCase();
+		mist.page.path = $(this).get_local_path('action');
 		var param = {};
 		$.each($(this).serializeArray(), function () {
 			param[this.name] = this.value;
 		});
-		// mist.page.getが使えないので、mist.page.pathに手動で値をセットする 
-		mist.page.path = action;
-		$os.ajax({
-			'url' : mist.conf.api_url + action,
-			'success' : mist.page.load,
-			'METHOD' : method.toUpperCase(),
-			'HEADERS' : { 'Cookie' : mist.page.cookie },
-			'CONTENT_TYPE' : 'TEXT',
-			'data' : param
-		});
+		$.extend(mist.page.param, param);
+		var method = ($(this).attr('method') || 'GET').toUpperCase();
+		mist.page.throw_request(method);
 	}
 });
 
