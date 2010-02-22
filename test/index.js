@@ -30,7 +30,6 @@ mist.event.add_complate(/5_diary.html/, function (match) {
 mist.event.add_complate(/6_activity.html/, function (match) {
 	// see http://mixi.jp/list_appli_activity.pl 
 	mist.page.get('/7_people.html');
-	mist.page.get('/8_requestShareApp.html');
 });
 mist.event.add_complate(/7_people.html/, function (match) {
 	if ($('#mist_content').text().match(/\[%/)) console.error(match);
