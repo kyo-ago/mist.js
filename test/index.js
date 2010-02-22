@@ -30,6 +30,7 @@ mist.event.add_complate(/5_diary.html/, function (match) {
 mist.event.add_complate(/6_activity.html/, function (match) {
 	// see http://mixi.jp/list_appli_activity.pl 
 	mist.page.get('/7_people.html');
+	mist.page.get('/8_requestShareApp.html');
 });
 mist.event.add_complate(/7_people.html/, function (match) {
 	if ($('#mist_content').text().match(/\[%/)) console.error(match);
@@ -49,5 +50,8 @@ mist.event.add_complate(/8_requestShareApp.html/, function (match) {
 mist.event.add_complate(/9_docrooturl.html/, function (match) {
 	var src = $('img').attr('src');
 	if (src.indexOf(mist.conf.doc_root_url) === -1) console.error(match);
-	
+	mist.page.get('/10_cookie.html');
+});
+mist.event.add_complate(/10_cookie.html/, function (match) {
+	if (mist.page.cookie.key !== 'value') console.error(match);
 });

@@ -14,6 +14,7 @@ JSを書かなくてもそこそこリッチなmixi appが作れるフレーム�
  * 「日記に書く」リンク
  * アクティビティの発行
  * 「友達を誘う」機能
+ * cookieのサポート
 
 ### 使い方
 
@@ -67,6 +68,11 @@ mixi外でコーディングの確認を行いたい場合に使用してくだ�
     &lt;span class="activity_params"&gt;アクティビティURLパラメータ&lt;/span&gt;
 &lt;/div&gt;
 </code></pre>
+
+ * 以下のようなhtmlでcookieの設定を行います。cookieの内容は以後、サーバに対してcookieとして送信されます。
+
+&lt;/html&gt;
+&lt;!-- set-cookie:key=value; --&gt;
 
 #### fieldに指定できる値
  * id
@@ -144,6 +150,7 @@ URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが�
  * Browser Cache
  * JS API documents
  * テスト支援機能
+   * 画像パス書き換え機能 -> とりあえず実装 doc書く
  * facebook互換機能
  * リクエストを自動的にRPCでまとめて通信する機能
  * ブラウザの「戻る」対応
