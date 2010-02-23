@@ -3,10 +3,10 @@
  * Copyright (C) KAYAC Inc. | http://www.kayac.com/
  * Dual licensed under the MIT <http://www.opensource.org/licenses/mit-license.php>
  * and GPL <http://www.opensource.org/licenses/gpl-license.php> licenses.
- * Date: 2010-02-22
+ * Date: 2010-02-23
  * @author kyo_ago
- * @version 1.0.5
- * @require jQuery 1.3
+ * @version 1.0.6
+ * @require jQuery 1.3.* or 1.4.*
  * @require jQuery opensocial-simple plugin
  * @see http://github.com/kyo-ago/mist.js
  */
@@ -30,8 +30,9 @@ mist.init = function _t_mist_init () {
 	$('a').live('click', mist.event.diary);
 	$('a').live('click', mist.event.link);
 	// フォームのsubmit処理。1.3系はIEでsubmitをliveでとれないので、:submitのclickを取る 
-	var old_ver = $.fn.jquery.match(/^1\.3\./) && $.browser.msie;
-	old_ver ? $(':submit').live('click', function (env) {
+	// 1.4でもIEでsubmitとれなかったので修正 
+	var old_ver = $.fn.jquery.match(/^1\.[34]\./) && $.browser.msie;
+	old_ver ? $(':submit, :image').live('click', function (env) {
 		mist.event.form.call($(this).closest('form').get(0), env);
 	}) : $('form').live('submit', mist.event.form);
 
@@ -173,8 +174,9 @@ mist.add_filters(function () {
 		{
 			'name' : 'person',
 			'exec' : function _t_mist_page_filter_person () {
+				var person = mist.social.person;
 				mist.page.data = mist.page.data.replace(/\[%(OWNER|VIEWER)\s+field="(\w+)"\s*%\]/g, function (_, name, field) {
-					return mist.social.person[name][field] || mist.social.person[name][field.toUpperCase()];
+					return person[name][field] || person[name][field.toUpperCase()];
 				});
 			}
 		},
