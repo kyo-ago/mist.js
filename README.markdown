@@ -143,15 +143,15 @@ URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが�
 5, 「http://」で始まっていれば外部URLへのアクセスと判断し、mixi.util.requestExternalNavigateToで外部URLへ遷移します。
 
 ### TODO
- * Flash用API
  * google analytics連携
  * Message API
  * Albums API
  * Browser Cache
  * JS API documents
  * テスト支援機能
-   * 画像パス書き換え機能 -> とりあえず実装 doc書く
- * facebook互換機能
  * リクエストを自動的にRPCでまとめて通信する機能
  * ブラウザの「戻る」対応
  * パーマネントリンク対応
+ * ユーザ情報取得失敗時の標準ユーザ情報設定
+ * 画像パス書き換え機能 -> とりあえず実装 doc書く
+ * Flash用API -> とりあえず実装 doc書く

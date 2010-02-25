@@ -175,7 +175,8 @@ mist.add_filters(function () {
 			'name' : 'person',
 			'exec' : function _t_mist_page_filter_person () {
 				var person = mist.social.person;
-				mist.page.data = mist.page.data.replace(/\[%(OWNER|VIEWER)\s+field="(\w+)"\s*%\]/g, function (_, name, field) {
+				mist.page.data = mist.page.data.replace(/\[%(OWNER|VIEWER)\s+field="(\w+)"\s*%\]/gi, function (_, name, field) {
+					name = name.toUpperCase();
 					return person[name][field] || person[name][field.toUpperCase()];
 				});
 			}
@@ -195,7 +196,7 @@ mist.add_filters(function () {
 				}, function _t_mist_page_filter_people_callback () {
 					mist.page.data = mist.page.data.replace(/\[%people(.*?)%\]/g, function (_, attr) {
 						var param = parse_attr_param(attr);
-						return mist.social.get_people(param.id)[param.field.toUpperCase()];
+						return mist.social.get_people(param.id)[param.field.toLowerCase()];
 					});
 				});
 			}
@@ -273,21 +274,35 @@ $.extend(mist.social = {}, {
 	'friends' : [],
 	// 取得しているユーザ情報のキャッシュ 
 	'cache' : {},
+	// personのモック追加 
+	'add_person_mock' : function _t_mist_social_add_person_mock (person) {
+		this.person = person;
+	},
 	// mist.social.personの読み込み 
 	'load_person' : function _t_mist_social_load_person () {
 		var self = this;
-		mist.env.loading_queue.push('');
+		if (self.person.OWNER.id) return;
+		mist.env.loading_queue.push('_t_mist_social_load_person');
 		$os.getPerson('all_field_set', function (p) {
+			mist.env.loading_queue.pop();
+			if (self.person.OWNER.id) return;
 			self.person.OWNER = mist.utils.person2obj(p.OWNER.fieldValue);
 			self.person.VIEWER = mist.utils.person2obj(p.VIEWER.fieldValue);
-			self.cache[self.person.OWNER.ID] = self.person.OWNER;
-			self.cache[self.person.VIEWER.ID] = self.person.VIEWER;
-			mist.env.loading_queue.pop('');
+			self.cache[self.person.OWNER.id] = self.person.OWNER;
+			self.cache[self.person.VIEWER.id] = self.person.VIEWER;
 		});
 	},
+	// peopleのモック追加 
+	'add_people_mock' : function _t_mist_social_add_people_mock (id_list, func) {
+		var self = this;
+		$.each(id_list, function () {
+			
+		});
+		this.person = person;
+	},
 	// mist.social.cacheの読み込み 
-	'load_people' : function (person, param, callback) {
-		mist.env.loading_queue.push('');
+	'load_people' : function _t_mist_social_load_people (person, param, callback) {
+		mist.env.loading_queue.push('_t_mist_social_load_people');
 		if ($.isFunction(param)) {
 			callback = param;
 			param = {};
@@ -303,20 +318,20 @@ $.extend(mist.social = {}, {
 			var cache = self.cache;
 			$.each(persons, function () {
 				var obj = mist.utils.person2obj(this);
-				cache[obj.ID] = obj;
+				cache[obj.id] = obj;
 			});
 			callback();
-			mist.env.loading_queue.pop('');
+			mist.env.loading_queue.pop();
 		});
 	},
 	// mist.social.cacheの取得 
-	'get_people' : function (id) {
+	'get_people' : function _t_mist_social_get_people (id) {
 		return this.cache[id-0];
 	},
 	// mist.social.friendsの読み込み 
 	'load_friends' : function _t_mist_social_load_friends (param, callback) {
 		if (this.friends.length) return callback();
-		mist.env.loading_queue.push('');
+		mist.env.loading_queue.push('_t_mist_social_load_friends');
 		var callback = function () {};
 		if ($.isFunction(param)) callback = param;
 		if ($.isFunction(param.callback)) callback = param.callback;
@@ -329,21 +344,21 @@ $.extend(mist.social = {}, {
 			var cache = self.cache;
 			fr.each(function (p) {
 				var obj = mist.utils.person2obj(p);
-				cache[obj.ID] = obj;
+				cache[obj.id] = obj;
 				friends.push(obj);
 			});
 			callback();
-			mist.env.loading_queue.pop('');
+			mist.env.loading_queue.pop();
 		};
 		$os.getFriends(param);
 	},
 	// mist.social.friendsの取得 
-	'get_friends' : function () {
+	'get_friends' : function _t_mist_social_get_friends () {
 		return this.friends;
 	},
 	// mist.social.friendsのid一覧取得 
-	'get_friends_ids' : function () {
-		return $.map(this.friends, function () { return this.ID });
+	'get_friends_ids' : function _t_mist_social_get_friends_ids () {
+		return $.map(this.friends, function () { return this.id });
 	}
 });
 
@@ -366,7 +381,7 @@ $.extend(mist.auth = {}, (function _t_mist_auth () {
 		'check_REQUIRE_OWNER_EQ_VIEWER' : function () {
 			if (!mist.conf.REQUIRE_OWNER_EQ_VIEWER) return;
 			var person = mist.social.person;
-			if (person.OWNER.fieldValue.ID === person.VIEWER.fieldValue.ID) return;
+			if (person.OWNER.id === person.VIEWER.id) return;
 			return mist.conf.REQUIRE_OWNER_EQ_VIEWER;
 		}
 	};
@@ -488,7 +503,7 @@ $.extend(mist.utils = {}, {
 	'create_diary_url' : function _t_mist_utils_create_diary_url (title, body) {
 		var EscapeEUCJP = get_EscapeEUCJP();
 		return 'http://mixi.jp/add_diary.pl?' + $.param({
-			'id' : mist.social.person.VIEWER.ID,
+			'id' : mist.social.person.VIEWER.id,
 			'diary_title' : EscapeEUCJP(title),
 			'diary_body' : EscapeEUCJP(body)
 		}).replace(/%25/g, '%');
@@ -545,7 +560,7 @@ $.extend(mist.utils = {}, {
 	// アクティビティ本文中の変数を置き換える 
 	'replace_appid_person' : function _t_mist_utils_replace_appid_person (str) {
 		str = str.replace(/\[%app_id\s*%\]/g, mist.env.app_id);
-		str = str.replace(/\[%(OWNER|VIEWER)\s+field="(\w+)"\s*%\]/g, function (_, name, field) {
+		str = str.replace(/\[%(OWNER|VIEWER)\s+field="(\w+)"\s*%\]/gi, function (_, name, field) {
 			return mist.social.person[name][field] || mist.social.person[name][field.toUpperCase()];
 		});
 		return str;
@@ -569,31 +584,33 @@ $.extend(mist.utils = {}, {
 		var result = {};
 		// 中間形式をプレーンな形へ変換 
 		$.each(all_field, function () {
-			var key = this + '';
-			if (person[key] === undefined) return;
-			result[key] = person[key];
+			var ukey = this + '';
+			var key = ukey.toLowerCase();
+			if (person[ukey] === undefined || person[ukey] === null) return;
+			result[key] = person[ukey];
 			// noimageも想定 
-			if (key === 'THUMBNAIL_URL') {
-				result[key+'_L'] = result[key].replace(/s(\.\w+)$/, '$1').replace(/76\.gif$/, '180.gif');
-				result[key+'_M'] = result[key];
-				result[key+'_S'] = result[key].replace(/s(\.\w+)$/, 'm$1').replace(/76\.gif$/, '40.gif');
+			if (key === 'thumbnail_url') {
+				result[key] = result[key] || '';
+				result[key+'_l'] = result[key].replace(/s(\.\w+)$/, '$1').replace(/76\.gif$/, '180.gif');
+				result[key+'_m'] = result[key];
+				result[key+'_s'] = result[key].replace(/s(\.\w+)$/, 'm$1').replace(/76\.gif$/, '40.gif');
 				return;
 			};
-			if (key === 'CURRENT_LOCATION') {
-				return result[key+'_TEXT'] = result[key].getField(addr_key);
+			if (key === 'current_location') {
+				return result[key+'_text'] = result[key].getField(addr_key);
 			};
-			if (key === 'GENDER') {
-				result[this+'_KEY'] = result[this].getKey();
-				result[this+'_TEXT'] = result[this].getDisplayValue();
+			if (key === 'gender') {
+				result[key+'_key'] = result[key].getKey();
+				result[key+'_text'] = result[key].getDisplayValue();
 				return;
 			};
-			if (key === 'DATE_OF_BIRTH') {
-				result[this+'_MONTH'] = result[this].getMonth() + 1;
-				result[this+'_DAY'] = result[this].getDate();
-				result[this+'_0MONTH'] = result[this+'_MONTH'] < 10 ? '0' + result[this+'_MONTH'] : result[this+'_MONTH'];
-				result[this+'_0DAY'] = result[this+'_DAY'] < 10 ? '0' + result[this+'_DAY'] : result[this+'_DAY'];
+			if (key === 'date_of_birth') {
+				result[key+'_month'] = result[key].getMonth() + 1;
+				result[key+'_day'] = result[key].getDate();
+				result[key+'_0month'] = result[key+'_month'] < 10 ? '0' + result[key+'_month'] : result[key+'_month'];
+				result[key+'_0day'] = result[key+'_day'] < 10 ? '0' + result[key+'_day'] : result[key+'_day'];
 				// '\u6708' == '月', '\u65e5' == '日' 
-				result[this+'_TEXT'] = result[this+'_0MONTH'] + '\u6708' + result[this+'_0DAY'] + '\u65e5';
+				result[key+'_text'] = result[key+'_0month'] + '\u6708' + result[key+'_0day'] + '\u65e5';
 				return;
 			};
 		});
@@ -704,15 +721,13 @@ function get_inner_text (str, start, end) {
 function add_stack_method (obj, name) {
 	var stack = obj[name + '_stack'] = [];
 	obj['add_' + name] = function add_stack_method_add (regexp, exec) {
-		if (arguments.length === 1) {
-			// 配列だったら一気に追加 
-			if (!$.isArray(regexp)) return stack.push(regexp);
-			return stack = stack.concat(regexp);
-		};
-		stack.push({
-			'path_regexp' : regexp,
-			'exec' : exec
-		});
+		// 配列だったら一気に追加 
+		if ($.isArray(regexp)) return stack = stack.concat(regexp);
+		// functionのみであればそのまま追加 
+		if ($.isFunction(regexp)) return stack.push({ 'exec' : regexp });
+		// 普通に読み込む 
+		if (arguments.length !== 1) return stack.push({ 'path_regexp' : regexp, 'exec' : exec });
+		return stack.push(regexp);
 	};
 	obj['call_' + name] = function add_stack_method_call () {
 		var path = mist.page.path;
