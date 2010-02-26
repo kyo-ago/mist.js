@@ -3,9 +3,9 @@
  * Copyright (C) KAYAC Inc. | http://www.kayac.com/
  * Dual licensed under the MIT <http://www.opensource.org/licenses/mit-license.php>
  * and GPL <http://www.opensource.org/licenses/gpl-license.php> licenses.
- * Date: 2010-02-23
+ * Date: 2010-02-26
  * @author kyo_ago
- * @version 1.0.6
+ * @version 1.0.7
  * @require jQuery 1.3.* or 1.4.*
  * @require jQuery opensocial-simple plugin
  * @see http://github.com/kyo-ago/mist.js
@@ -39,8 +39,10 @@ mist.init = function _t_mist_init () {
 	$(function () {
 		// フィルタのセットアップ 
 		$.each(mist.add_filters.filters, function () { this(); });
+		var param = $os.getParams();
+		if ('string' !== typeof param) param = '';
 		// /の読み込み 
-		if (mist.conf.api_url) mist.page.get(mist.conf.index_page || '/index.html');
+		if (mist.conf.api_url) mist.page.throw_request(param || mist.conf.index_page || '/index.html', 'GET');
 
 		// 追加対象タグの設定 
 		if (!$('#mist_content').length) $('body').append('<div id="mist_content">');
@@ -79,14 +81,24 @@ $.extend(mist.page = {}, {
 	// APIからのテンプレート取得 
 	'get' : function _t_mist_page_get (path) {
 		var self = mist.page;
+		if (!mist.conf.permanent_link) return self.throw_request(path, 'GET');
+
 		var path_param = path.split('?');
-		mist.page.path = path_param.shift();
+		self.path = path_param.shift();
 		$.extend(self.param, parse_query_param(path_param.join('?')));
-		mist.page.throw_request('GET');
+		var param = $.param(self.param);
+		if (param) param += '?';
+		var url = self.path + param;
+		var view = gadgets.views.getCurrentView().getName();
+		$os.navigateTo(view, url);
 	},
 	// サーバを呼び出して結果をloadへ渡す 
-	'throw_request' : function _t_mist_page_throw_request (method) {
+	'throw_request' : function _t_mist_page_throw_request (path, method) {
 		var self = mist.page;
+		var path_param = path.split('?');
+		self.path = path_param.shift();
+		$.extend(self.param, parse_query_param(path_param.join('?')));
+
 		var cookie = $.param(mist.page.cookie);
 		$os.ajax({
 			'url' : mist.conf.api_url + mist.page.path,
@@ -215,6 +227,14 @@ mist.add_filters(function () {
 					mist.page.data = mist.page.data.replace(/\[%friends(.*?)%\]/g, mist.social.get_friends_ids().join(','));
 				};
 				mist.social.load_friends(params);
+			}
+		},
+		// [%permanent_link%]の置き換え 
+		{
+			'name' : 'permanent_link',
+			'exec' : function _t_mist_page_filter_app_id () {
+				var link = 'http://mixi.jp/run_appli.pl?id='+mist.env.app_id+'&appParams=' + encodeURIComponent(encodeURIComponent('"' + mist.page.serialize_url + '"'));
+				mist.page.data = mist.page.data.replace(/\[%permanent_link\s*%\]/g, link);
 			}
 		}
 	]);
@@ -476,14 +496,14 @@ $.extend(mist.event = {}, {
 		if (env.isImmediatePropagationStopped()) return;
 		env.preventDefault();
 
-		mist.page.path = $(this).get_local_path('action');
+		var path = $(this).get_local_path('action');
 		var param = {};
 		$.each($(this).serializeArray(), function () {
 			param[this.name] = this.value;
 		});
 		$.extend(mist.page.param, param);
 		var method = ($(this).attr('method') || 'GET').toUpperCase();
-		mist.page.throw_request(method);
+		mist.page.throw_request(path, method);
 	}
 });
 

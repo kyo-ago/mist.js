@@ -3,6 +3,7 @@ $.extend(mist.conf, {
 	'doc_root_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/',
 	'api_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/'
 });
+
 /*
 その他の設定情報
 $.extend(mist.conf, {

@@ -1,7 +1,9 @@
 <Module>
     <ModulePrefs title="mixiapp framework mist.js test gadget.xml" author_email="ago@kayac.com">
         <Require feature="opensocial-0.8" />
+        <Require feature="views" />
         <Require feature="dynamic-height" />
+        <Require feature="analytics" />
     </ModulePrefs>
 <!-- ####################### 共通ヘッダ ####################### -->
     <Content type="html" view="canvas" quirks="false"><![CDATA[
