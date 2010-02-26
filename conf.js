@@ -15,6 +15,12 @@ $.extend(mist.conf, {
 	// オーナーとビュアーが同じであることを要求しない 
 	'REQUIRE_OWNER_EQ_VIEWER_URL' : undefined,
 	// 切り出すタグの範囲 
-	'mist_page_filter_strip_mist_content_tags' : ['<div id="mist_content">', '<!-- /#mist_content --></div>']
+	'mist_page_filter_strip_mist_content_tags' : ['<div id="mist_content">', '<!-- /#mist_content --></div>'],
+	// 立て幅の絶対指定（dom ready時に適応後、adjustを行わない） 
+	'absolute_height' : 600,
+	// 立て幅の自動調整を行わない 
+	'auto_adjust' : true,
+	// パーマネントリンクモード 
+	'permanent_link' : false
 });
 */

@@ -26,24 +26,25 @@ mist.init = function _t_mist_init () {
 
 	// live eventの設定 
 	// 上から順に呼ばれる 
-	$('a').live('click', mist.event.requestShareApp);
-	$('a').live('click', mist.event.diary);
-	$('a').live('click', mist.event.link);
+	$('a').live('click.mist.event_requestShareApp', mist.event.requestShareApp);
+	$('a').live('click.mist.event_diary', mist.event.diary);
+	$('a').live('click.mist.event_link', mist.event.link);
 	// フォームのsubmit処理。1.3系はIEでsubmitをliveでとれないので、:submitのclickを取る 
 	// 1.4でもIEでsubmitとれなかったので修正 
 	var old_ver = $.fn.jquery.match(/^1\.[34]\./) && $.browser.msie;
-	old_ver ? $(':submit, :image').live('click', function (env) {
+	old_ver ? $(':submit, :image').live('click.mist_event_form', function (env) {
 		mist.event.form.call($(this).closest('form').get(0), env);
-	}) : $('form').live('submit', mist.event.form);
+	}) : $('form').live('submit.mist_event_form', mist.event.form);
 
 	$(function () {
 		// フィルタのセットアップ 
 		$.each(mist.add_filters.filters, function () { this(); });
 		// /の読み込み 
-		if (mist.conf.index_page && mist.conf.api_url) mist.page.get(mist.conf.index_page || '/index.html');
+		if (mist.conf.api_url) mist.page.get(mist.conf.index_page || '/index.html');
 
 		// 追加対象タグの設定 
 		if (!$('#mist_content').length) $('body').append('<div id="mist_content">');
+		mist.page.adjust();
 	});
 };
 
@@ -69,8 +70,6 @@ $.extend(mist.page = {}, {
 	'param' : {},
 	// 常に保持されるparam 
 	'base_param' : {},
-	// auto adjust flag 
-	'auto_adjust' : true,
 	// 状態のserialize 
 	'serialize_url' : '',
 	// 現在のserialize urlを作成 
@@ -79,6 +78,7 @@ $.extend(mist.page = {}, {
 	},
 	// APIからのテンプレート取得 
 	'get' : function _t_mist_page_get (path) {
+		var self = mist.page;
 		var path_param = path.split('?');
 		mist.page.path = path_param.shift();
 		$.extend(self.param, parse_query_param(path_param.join('?')));
@@ -89,7 +89,7 @@ $.extend(mist.page = {}, {
 		var self = mist.page;
 		var cookie = $.param(mist.page.cookie);
 		$os.ajax({
-			'url' : mist.conf.api_url + mist.page.path, 
+			'url' : mist.conf.api_url + mist.page.path,
 			'data' : $.extend(mist.page.param, mist.page.base_param),
 			'METHOD' : method.toUpperCase(),
 			'HEADERS' : cookie ? { 'Cookie' : cookie } : undefined,
@@ -109,10 +109,11 @@ $.extend(mist.page = {}, {
 		mist.page.call_filter();
 		$(function () {
 			var exec = function  () {
+				self.data = self.data.replace(/[\r\n]/g, '');
 				$('#mist_content').html(self.data);
-				mist.event.call_complate();
-				self.adjust();
+				if (!mist.conf.absolute_height) self.adjust();
 				self.taget_top();
+				mist.event.call_complate();
 			};
 			if (!mist.env.is_loading()) return exec();
 			var timer = setInterval(function () {
@@ -124,9 +125,10 @@ $.extend(mist.page = {}, {
 	},
 	// 画面サイズの自動調整 
 	'adjust' : function _t_mist_page_adjust () {
-		if (!mist.page.auto_adjust) return;
-		$os.adjustHeight();
-		$('img').load(function(){ $os.adjustHeight(); });
+		if (!mist.conf.auto_adjust) return;
+		var height = mist.conf.absolute_height;
+		$os.adjustHeight(height);
+		$('img').load(function(){ $os.adjustHeight(height); });
 	},
 	// 表示領域をiframe topへ移動 
 	'taget_top' : function _t_mist_page_taget_top () {
@@ -258,7 +260,9 @@ $.extend(mist.conf = {}, {
 	'VIEWER_REQUIRE_APP_URL' : mist.env.join_appli + mist.env.app_id,
 	// オーナーとビュアーが同じであることを要求する 
 	// （所有していない場合、このURLへapp_idを追加して移動） 
-	'REQUIRE_OWNER_EQ_VIEWER_URL' : mist.env.run_appli + mist.env.app_id
+	'REQUIRE_OWNER_EQ_VIEWER_URL' : mist.env.run_appli + mist.env.app_id,
+	// auto adjust flag 
+	'auto_adjust' : true
 });
 
 /*
@@ -274,6 +278,14 @@ $.extend(mist.social = {}, {
 	'friends' : [],
 	// 取得しているユーザ情報のキャッシュ 
 	'cache' : {},
+	// ユーザ情報が取得できなかった場合の初期値 
+	'anonymous_user' : {
+		'id' : '0',
+		'nickname' : 'guest',
+		'has_app' : 'false',
+		'profile_url' : 'http://mixi.jp/',
+		'thumnail_url' : 'http://img.mixi.jp/img/basic/common/noimage_member76.gif'
+	},
 	// personのモック追加 
 	'add_person_mock' : function _t_mist_social_add_person_mock (person) {
 		this.person = person;
@@ -404,10 +416,10 @@ $.extend(mist.event = {}, {
 	// 「友達を誘う」リンクの処理 
 	'requestShareApp' : function _t_mist_event_requestShareApp (env) {
 		if (env.button) return;
-		if (!$(this).get_local_path('href').match('/opensocial/sharefriend/')) return;
+		var url = $(this).get_local_path('href');
+		if (!url.match('/opensocial/sharefriend/')) return;
 		env.stopImmediatePropagation();
 		env.preventDefault();
-		var url = $(this).get_local_path('href');
 
 		mist.utils.throw_share_app(function _t_mist_event_requestShareApp_callback (result) {
 			// 通知先URLの取得 
@@ -416,7 +428,7 @@ $.extend(mist.event = {}, {
 			url = match.pop();
 			var param = url.split(/\?/);
 			url = param.shift();
-			param = param.join('');
+			param = param.join('?');
 			var params = parse_query_param(param);
 			params.recipientIds = result.join(',');
 			$os.get(url, params, function () {});
@@ -458,8 +470,6 @@ $.extend(mist.event = {}, {
 		if (href.match(mosix('^/?#'))) return mist.page.adjust();
 		// 外部リンク 
 		if (href.match(mosix('^http://'))) return mixi.util.requestExternalNavigateTo(href);
-
-		throw new Error(' mist : 認識できないURL形式です ' + href);
 	},
 	// submit処理 
 	'form' : function _t_mist_event_form (env) {
@@ -583,11 +593,14 @@ $.extend(mist.utils = {}, {
 		})();
 		var result = {};
 		// 中間形式をプレーンな形へ変換 
+		var anon = mist.social.anonymous_user;
 		$.each(all_field, function () {
 			var ukey = this + '';
 			var key = ukey.toLowerCase();
-			if (person[ukey] === undefined || person[ukey] === null) return;
-			result[key] = person[ukey];
+			var val = person[ukey];
+			if ((val === undefined || val === null) && anon[key]) val = anon[key];
+			if (val === undefined || val === null) return;
+			result[key] = val;
 			// noimageも想定 
 			if (key === 'thumbnail_url') {
 				result[key] = result[key] || '';
