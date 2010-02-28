@@ -140,7 +140,9 @@ $.extend(mist.page = {}, {
 		if (!mist.conf.auto_adjust) return;
 		var height = mist.conf.absolute_height;
 		$os.adjustHeight(height);
-		$('img').load(function(){ $os.adjustHeight(height); });
+		$('img[height=""]').load(function () {
+			$os.adjustHeight(height);
+		});
 	},
 	// 表示領域をiframe topへ移動 
 	'taget_top' : function _t_mist_page_taget_top () {
@@ -232,9 +234,8 @@ mist.add_filters(function () {
 		// [%permanent_link%]の置き換え 
 		{
 			'name' : 'permanent_link',
-			'exec' : function _t_mist_page_filter_app_id () {
-				var link = 'http://mixi.jp/run_appli.pl?id='+mist.env.app_id+'&appParams=' + encodeURIComponent(encodeURIComponent('"' + mist.page.serialize_url + '"'));
-				mist.page.data = mist.page.data.replace(/\[%permanent_link\s*%\]/g, link);
+			'exec' : function _t_mist_page_filter_permanent_link () {
+				mist.page.data = mist.page.data.replace(/\[%permanent_link\s*%\]/g, mist.utils.create_permanent_link());
 			}
 		}
 	]);
@@ -441,7 +442,7 @@ $.extend(mist.event = {}, {
 		env.stopImmediatePropagation();
 		env.preventDefault();
 
-		mist.utils.throw_share_app(function _t_mist_event_requestShareApp_callback (result) {
+		mist.utils.share_app(function _t_mist_event_requestShareApp_callback (result) {
 			// 通知先URLの取得 
 			var match = url.match(/#(.+)/);
 			if (!match) return;
@@ -529,6 +530,10 @@ mist.event.add_complate({
 	その他処理
 */
 $.extend(mist.utils = {}, {
+	// permanent_link URLの組み立て 
+	'create_permanent_link' : function _t_mist_utils_create_permanent_link () {
+		return 'http://mixi.jp/run_appli.pl?id='+mist.env.app_id+'&appParams=' + encodeURIComponent(encodeURIComponent('"' + mist.page.serialize_url + '"'));
+	},
 	// 「日記に書く」URLの組み立て 
 	'create_diary_url' : function _t_mist_utils_create_diary_url (title, body) {
 		var EscapeEUCJP = get_EscapeEUCJP();
@@ -539,7 +544,6 @@ $.extend(mist.utils = {}, {
 		}).replace(/%25/g, '%');
 	},
 	// 「日記に書く」画面への遷移 
-	// （flash等からの使用も想定） 
 	'throw_diary' : function _t_mist_utils_throw_diary (title, body, target) {
 		title = this.replace_appid_person(title);
 		body = this.replace_appid_person(body);
@@ -547,7 +551,6 @@ $.extend(mist.utils = {}, {
 		window.open(url, target || '_top');
 	},
 	// アクティビティを投げる 
-	// （flash等からの使用も想定） 
 	'throw_activity' : function _t_mist_utils_throw_activity (body, param) {
 		body = this.replace_appid_person(body);
 		param['target']
@@ -561,8 +564,8 @@ $.extend(mist.utils = {}, {
 		$os.postActivity(body, param);
 	},
 	// 「友達を誘う」の実行 
-	'throw_share_app' : function _t_mist_utils_throw_share_app (callback) {
-		var name = '_t_mist_utils_throw_share_app';
+	'share_app' : function _t_mist_utils_share_app (callback) {
+		var name = '_t_mist_utils_share_app';
 		var data;
 		$('object, embed').each(function () {
 			// object, embedを一時的に非表示にする 
@@ -591,7 +594,7 @@ $.extend(mist.utils = {}, {
 	'replace_appid_person' : function _t_mist_utils_replace_appid_person (str) {
 		str = str.replace(/\[%app_id\s*%\]/g, mist.env.app_id);
 		str = str.replace(/\[%(OWNER|VIEWER)\s+field="(\w+)"\s*%\]/gi, function (_, name, field) {
-			return mist.social.person[name][field] || mist.social.person[name][field.toUpperCase()];
+			return mist.social.person[name][field] || mist.social.person[name][field.toLowerCase()];
 		});
 		return str;
 	},
@@ -648,40 +651,52 @@ $.extend(mist.utils = {}, {
 			};
 		});
 		return result;
-	},
-	// flash用SIGNED通信API(ajax) 
-	'as_call_ajax' : function _t_mist_utils_as_call_ajax (settings) {
-		$os.ajaxSettings.AUTHORIZATION = 'SIGNED';
-		$os.ajax(settings.success, $.extend({
-			'success' : as_callback_wrapper(settings.success)
+	}
+});
+
+/*
+	AS用API
+*/
+$.extend(mist.as = {}, {
+	// SIGNED通信API(ajax) 
+	'call_ajax' : function _t_mist_as_call_ajax (settings) {
+		$os.ajax($.extend(settings, {
+			'success' : as_callback_wrapper(settings.success),
+			'AUTHORIZATION' : 'SIGNED'
 		}));
-		$os.ajaxSettings.AUTHORIZATION = undefined;
 	},
-	// flash用SIGNED通信API(get) 
-	'as_call_get' : as_call_template('get'),
-	// flash用SIGNED通信API(post) 
-	'as_call_post' : as_call_template('post'),
-	// flash用ユーザ情報読み込み 
-	'as_load_people' : function (id_list, callback_name) {
+	// SIGNED通信API(get) 
+	'call_get' : as_call_template('get'),
+	// SIGNED通信API(post) 
+	'call_post' : as_call_template('post'),
+	// person情報読み込み 
+	'load_person' : function _t_mist_as_load_person (callback_name) {
+		as_callback_wrapper(callback_name)(mist.social.person);
+	},
+	// ユーザ情報読み込み 
+	'load_people' : function _t_mist_as_load_people (id_list, callback_name) {
 		mist.social.load_people(id_list, function () {
 			as_callback_wrapper(callback_name)($.map(id_list, function (id) {
-				return toLowerCaseKey(mist.social.get_people(id));
+				return mist.social.get_people(id);
 			}));
 		});
 	},
-	// flash用friend情報読み込み 
-	'as_load_friends' : function (param, callback_name) {
+	// friend情報読み込み 
+	'load_friends' : function _t_mist_as_load_friends (param, callback_name) {
 		mist.social.load_friends(param, function () {
-			var fr = mist.social.get_friends();
-			as_callback_wrapper(callback_name)($.map(fr, function (usr) {
-				return toLowerCaseKey(usr);
-			}));
+			as_callback_wrapper(callback_name)(mist.social.get_friends());
 		});
 	},
-	// flash用マイミクを誘う 
-	'as_throw_share_app' : function (callback_name) {
-		this.throw_share_app(as_callback_wrapper(callback_name));
-	}
+	// マイミクを誘う 
+	'share_app' : function _t_mist_as_share_app (callback_name) {
+		mist.utils.share_app(as_callback_wrapper(callback_name));
+	},
+	// permanent_link取得 
+	'get_permanent_link' : mist.utils.permanent_link,
+	// 「日記に書く」画面への遷移 
+	'throw_diary' : mist.utils.throw_diary,
+	// アクティビティを投げる 
+	'get_permanent_link' : mist.utils.throw_activity
 });
 
 // flash用SIGNED通信API(テンプレート) 
