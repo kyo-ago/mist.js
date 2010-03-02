@@ -3,9 +3,9 @@
  * Copyright (C) KAYAC Inc. | http://www.kayac.com/
  * Dual licensed under the MIT <http://www.opensource.org/licenses/mit-license.php>
  * and GPL <http://www.opensource.org/licenses/gpl-license.php> licenses.
- * Date: 2010-02-26
+ * Date: 2010-03-02
  * @author kyo_ago
- * @version 1.0.7
+ * @version 1.1.1
  * @require jQuery 1.3.* or 1.4.*
  * @require jQuery opensocial-simple plugin
  * @see http://github.com/kyo-ago/mist.js
@@ -14,6 +14,45 @@
 if (!window.mist) window.mist = {};
 
 if (!window.$os) $os = $.opensocial_simple;
+if (!window.$os) {
+	$os = {
+		'getParams' : function () {
+			return '';
+		},
+		'navigateTo' : function () {
+		},
+		'ajax' : function (param) {
+			param.success();
+		},
+		'adjustHeight' : function () {
+		},
+		'getPerson' : function () {
+			arguments[1]({
+				'OWNER' : { 'fieldValue' : mist.conf.anonymous_user },
+				'VIEWER' : { 'fieldValue' : mist.conf.anonymous_user }
+			});
+		},
+		'getPersonsSync' : function () {
+			arguments[2]([]);
+		},
+		'getFriends' : function (param) {
+			param.callback();
+		},
+		'get' : function () {
+			arguments[2]();
+		},
+		'postActivity' : function () {
+		},
+		'requestShareApp' : function () {
+			arguments[0]({
+				'getData' : function () {
+					return { 'recipientIds' : [] };
+				}
+			});
+		},
+		'person_field_set' : { 'all_field_set' : [] }
+	};
+};
 
 /*
 	初期化
@@ -22,7 +61,10 @@ if (!window.$os) $os = $.opensocial_simple;
 	DOMを変更する場合は$()の中で
 */
 mist.init = function _t_mist_init () {
-	this.social.load_person();
+	this.social.load_person(function () {
+		// 権限の検証 
+		mist.auth.check();
+	});
 
 	// live eventの設定 
 	// 上から順に呼ばれる 
@@ -254,7 +296,7 @@ mist.add_filters(function () {
 */
 $.extend(mist.env = {}, {
 	// アプリのID 
-	'app_id' : gadgets.util.getUrlParameters()['app_id'],
+	'app_id' : window.gadgets ? gadgets.util.getUrlParameters()['app_id'] : '0',
 	// アプリ情報表示画面URL 
 	'view_appli' : 'http://mixi.jp/view_appli.pl?id=',
 	// アプリインストール画面URL 
@@ -283,7 +325,15 @@ $.extend(mist.conf = {}, {
 	// （所有していない場合、このURLへapp_idを追加して移動） 
 	'REQUIRE_OWNER_EQ_VIEWER_URL' : mist.env.run_appli + mist.env.app_id,
 	// auto adjust flag 
-	'auto_adjust' : true
+	'auto_adjust' : true,
+	// ユーザ情報が取得できなかった場合の初期値 
+	'anonymous_user' : {
+		'id' : '0',
+		'nickname' : 'guest',
+		'has_app' : false,
+		'profile_url' : 'http://mixi.jp/',
+		'thumnail_url' : 'http://img.mixi.jp/img/basic/common/noimage_member76.gif'
+	}
 });
 
 /*
@@ -299,20 +349,12 @@ $.extend(mist.social = {}, {
 	'friends' : [],
 	// 取得しているユーザ情報のキャッシュ 
 	'cache' : {},
-	// ユーザ情報が取得できなかった場合の初期値 
-	'anonymous_user' : {
-		'id' : '0',
-		'nickname' : 'guest',
-		'has_app' : 'false',
-		'profile_url' : 'http://mixi.jp/',
-		'thumnail_url' : 'http://img.mixi.jp/img/basic/common/noimage_member76.gif'
-	},
 	// personのモック追加 
 	'add_person_mock' : function _t_mist_social_add_person_mock (person) {
 		this.person = person;
 	},
 	// mist.social.personの読み込み 
-	'load_person' : function _t_mist_social_load_person () {
+	'load_person' : function _t_mist_social_load_person (callback) {
 		var self = this;
 		if (self.person.OWNER.id) return;
 		mist.env.loading_queue.push('_t_mist_social_load_person');
@@ -323,6 +365,7 @@ $.extend(mist.social = {}, {
 			self.person.VIEWER = mist.utils.person2obj(p.VIEWER.fieldValue);
 			self.cache[self.person.OWNER.id] = self.person.OWNER;
 			self.cache[self.person.VIEWER.id] = self.person.VIEWER;
+			callback();
 		});
 	},
 	// peopleのモック追加 
@@ -346,7 +389,8 @@ $.extend(mist.social = {}, {
 		};
 		var self = this;
 		person = $.grep(person, function (id) { return !self.cache[id]; });
-		param.field = 'all_field_set';
+		if (!param.field) param.field = 'all_field_set';
+		if (!param.max) param.max = 1000;
 		$os.getPersonsSync(person, param, function (persons) {
 			var cache = self.cache;
 			$.each(persons, function () {
@@ -370,7 +414,6 @@ $.extend(mist.social = {}, {
 		if ($.isFunction(param.callback)) callback = param.callback;
 		var self = this;
 		param.field = 'all_field_set';
-		// とりあえず全部取る 
 		if (!param.max) param.max = 1000;
 		param.callback = function _t_mist_social_load_friends_callback (fr) {
 			var friends = self.friends;
@@ -403,29 +446,30 @@ $.extend(mist.auth = {}, (function _t_mist_auth () {
 	return {
 		// mist.conf以下の権限情報を調べて、権限がない場合画面遷移する 
 		'check' : function _t_mist_auth_check () {
+			var self = this;
 			$.each(['OWNER_REQUIRE_APP', 'VIEWER_REQUIRE_APP', 'REQUIRE_OWNER_EQ_VIEWER'], function () {
-				var url = this['check_' + this]();
+				var url = self['check_' + this]();
 				if (!url) return;
 				window.open(url, '_top');
 			});
 		},
 		'check_OWNER_REQUIRE_APP' : REQUIRE_APP('OWNER'),
 		'check_VIEWER_REQUIRE_APP' : REQUIRE_APP('VIEWER'),
-		'check_REQUIRE_OWNER_EQ_VIEWER' : function () {
-			if (!mist.conf.REQUIRE_OWNER_EQ_VIEWER) return;
+		'check_REQUIRE_OWNER_EQ_VIEWER' : function _t_mist_auth_check_REQUIRE_OWNER_EQ_VIEWER () {
+			if (!mist.conf.REQUIRE_OWNER_EQ_VIEWER_URL) return;
 			var person = mist.social.person;
 			if (person.OWNER.id === person.VIEWER.id) return;
-			return mist.conf.REQUIRE_OWNER_EQ_VIEWER;
+			return mist.conf.REQUIRE_OWNER_EQ_VIEWER_URL;
 		}
 	};
 
 	// アプリインストール済みか否かで画面遷移する先のURLを返す 
 	function REQUIRE_APP (user) {
-		return function __t_check_req () {
-			if (!mist.conf[user+'_REQUIRE_APP']) return;
-			var HAS_APP = mist.social.person[user].fieldValue.HAS_APP;
-			if (HAS_APP === 'true') return;
-			return mist.conf[user+'_REQUIRE_APP'];
+		return function _t_mist_auth_REQUIRE_APP () {
+			if (!mist.conf[user+'_REQUIRE_APP_URL']) return;
+			var has_app = mist.social.person[user].has_app;
+			if (has_app === 'true') return;
+			return mist.conf[user+'_REQUIRE_APP_URL'];
 		};
 	};
 })());
@@ -616,12 +660,12 @@ $.extend(mist.utils = {}, {
 		})();
 		var result = {};
 		// 中間形式をプレーンな形へ変換 
-		var anon = mist.social.anonymous_user;
+		var anon = mist.conf.anonymous_user;
 		$.each(all_field, function () {
 			var ukey = this + '';
 			var key = ukey.toLowerCase();
 			var val = person[ukey];
-			if ((val === undefined || val === null) && anon[key]) val = anon[key];
+			if ((val === undefined || val === null) && (anon[key] !== undefined)) val = anon[key];
 			if (val === undefined || val === null) return;
 			result[key] = val;
 			// noimageも想定 
@@ -638,6 +682,15 @@ $.extend(mist.utils = {}, {
 			if (key === 'gender') {
 				result[key+'_key'] = result[key].getKey();
 				result[key+'_text'] = result[key].getDisplayValue();
+				return;
+			};
+			if (key === 'has_app') {
+				result[key] = result[key]
+					? result[key] === 'false'
+						? false
+						: true
+					: false
+				;
 				return;
 			};
 			if (key === 'date_of_birth') {
@@ -660,59 +713,78 @@ $.extend(mist.utils = {}, {
 $.extend(mist.as = {}, {
 	// SIGNED通信API(ajax) 
 	'call_ajax' : function _t_mist_as_call_ajax (settings) {
+		if (!settings) settings = {};
+		if (!settings.success) settings.success = 'mist_as_call_ajax';
 		$os.ajax($.extend(settings, {
 			'success' : as_callback_wrapper(settings.success),
 			'AUTHORIZATION' : 'SIGNED'
 		}));
 	},
 	// SIGNED通信API(get) 
-	'call_get' : as_call_template('get'),
+	'call_get' : as_call_template('get', 'mist_as_call_get'),
 	// SIGNED通信API(post) 
-	'call_post' : as_call_template('post'),
+	'call_post' : as_call_template('post', 'mist_as_call_post'),
 	// person情報読み込み 
 	'load_person' : function _t_mist_as_load_person (callback_name) {
-		as_callback_wrapper(callback_name)(mist.social.person);
+		as_callback_wrapper(callback_name || 'mist_as_load_person')(mist.social.person);
 	},
 	// ユーザ情報読み込み 
-	'load_people' : function _t_mist_as_load_people (id_list, callback_name) {
-		mist.social.load_people(id_list, function () {
-			as_callback_wrapper(callback_name)($.map(id_list, function (id) {
-				return mist.social.get_people(id);
-			}));
+	'load_people' : function _t_mist_as_load_people (id_list, param, callback_name) {
+		if ('string' === typeof param) {
+			callback_name = param;
+			param = {};
+		};
+		if (!param) param = {};
+		if (!callback_name) callback_name = 'mist_as_load_people';
+		mist.social.load_people(id_list, param, function () {
+			if (!$.isArray(id_list)) id_list = [id_list];
+			as_callback_wrapper(callback_name)({
+				'people' : $.map(id_list, function (id) {
+					return mist.social.get_people(id);
+				})
+			});
 		});
 	},
 	// friend情報読み込み 
 	'load_friends' : function _t_mist_as_load_friends (param, callback_name) {
+		if ('string' === typeof param) {
+			callback_name = param;
+			param = {};
+		};
+		if (!callback_name) callback_name = 'mist_as_load_friends';
 		mist.social.load_friends(param, function () {
-			as_callback_wrapper(callback_name)(mist.social.get_friends());
+			as_callback_wrapper(callback_name)({
+				'friends' : mist.social.get_friends()
+			});
 		});
 	},
 	// マイミクを誘う 
 	'share_app' : function _t_mist_as_share_app (callback_name) {
-		mist.utils.share_app(as_callback_wrapper(callback_name));
+		mist.utils.share_app(as_callback_wrapper(callback_name || 'mist_as_share_app'));
 	},
 	// permanent_link取得 
 	'get_permanent_link' : mist.utils.permanent_link,
 	// 「日記に書く」画面への遷移 
 	'throw_diary' : mist.utils.throw_diary,
 	// アクティビティを投げる 
-	'get_permanent_link' : mist.utils.throw_activity
+	'throw_activity' : mist.utils.throw_activity
 });
 
 // flash用SIGNED通信API(テンプレート) 
-function as_call_template (method) {
-	return function _as_call_template (url, data, callback, type) {
-		if ($.isFunction(data)) {
-			callback = data;
+function as_call_template (method, default_callback_name) {
+	return function _as_call_template (url, data, callback_name, type) {
+		if ('string' === typeof data) {
+			callback_name = data;
 			data = null;
 		};
+		if (!callback_name) callback_name = default_callback_name
 		$os.ajax({
 			'url' : url, 
 			'data' : data,
 			'METHOD' : method.toUpperCase(),
 			'CONTENT_TYPE' : type,
 			'AUTHORIZATION' : 'SIGNED',
-			'success' : as_callback_wrapper(callback)
+			'success' : as_callback_wrapper(callback_name)
 		});
 	};
 };
@@ -818,7 +890,11 @@ $.fn.extend({
 	}
 });
 
-mist.init();
+(function () {
+	var src = $('script[src*="mist."]').attr('src');
+	if (!src) return mist.init();
+	if (!src.match(/#.*no_init/)) return mist.init();
+})();
 
 /*!
 //
