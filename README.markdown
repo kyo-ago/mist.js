@@ -17,6 +17,8 @@ JSを書かなくてもそこそこリッチなmixi appが作れるフレーム�
  * cookieのサポート
  * パーマネントリンク対応
 
+また、ActionScript用のAPIも提供しています。
+
 ### 使い方
 
 1, gadget.xmlのModule ModulePrefsに以下の内容を記述してください。
@@ -347,5 +349,4 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
  * JS API documents
  * リクエストを自動的にRPCでまとめて通信する機能
  * ブラウザの「戻る」対応
- * Flash用APIの検証
  * テスト支援機能 -> ざっくり実装doc書く
