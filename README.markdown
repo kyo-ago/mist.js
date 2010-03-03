@@ -81,9 +81,9 @@ mixi外でコーディングの確認を行いたい場合に使用してくだ�
 
 #### fieldに指定できる値
 
-以下の内容を指定可能ですが、id、nickname、has\_app、profile\_url、thumnail\_url*以外はユーザの設定により取得できない場合があります。
+以下の内容を指定可能ですが、id、nickname、has\_app、profile\_url、thumnail\_url\*以外はユーザの設定により取得できない場合があります。
 
-id、nickname、has\_app、profile\_url、thumnail\_url*に関しては取得に失敗した場合でもダミーの情報を設定します。
+id、nickname、has\_app、profile\_url、thumnail\_url\*に関しては取得に失敗した場合でもダミーの情報を設定します。
 
  * id
  	 * mixi ID
@@ -292,8 +292,8 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
 
  * people object  
  	以下のプロパティが存在するobjectです。  
-	id、nickname、has\_app、profile\_url、thumnail\_url*以外はユーザの設定により取得できない場合があります。  
-	id、nickname、has\_app、profile\_url、thumnail\_url*に関しては取得に失敗した場合でもダミーの情報を設定します。
+	id、nickname、has\_app、profile\_url、thumnail\_url\*以外はユーザの設定により取得できない場合があります。  
+	id、nickname、has\_app、profile\_url、thumnail\_url\*に関しては取得に失敗した場合でもダミーの情報を設定します。
 
 	 * id
 	 	 * mixi ID
@@ -334,7 +334,7 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
 
 ### SIGNED通信に関して
 
-以下のコードを実行することにより、すべての通信がAUTHORIZATION = SIGNEDとなります。
+以下のコードを実行することにより、以後すべての通信がAUTHORIZATION = SIGNEDとなります。
 
 	$os.ajaxSettings.AUTHORIZATION = 'SIGNED';
 
