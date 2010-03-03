@@ -3,9 +3,9 @@
  * Copyright (C) KAYAC Inc. | http://www.kayac.com/
  * Dual licensed under the MIT <http://www.opensource.org/licenses/mit-license.php>
  * and GPL <http://www.opensource.org/licenses/gpl-license.php> licenses.
- * Date: 2010-03-02
+ * Date: 2010-03-03
  * @author kyo_ago
- * @version 1.1.1
+ * @version 1.1.2
  * @require jQuery 1.3.* or 1.4.*
  * @require jQuery opensocial-simple plugin
  * @see http://github.com/kyo-ago/mist.js
@@ -13,46 +13,7 @@
 
 if (!window.mist) window.mist = {};
 
-if (!window.$os) $os = $.opensocial_simple;
-if (!window.$os) {
-	$os = {
-		'getParams' : function () {
-			return '';
-		},
-		'navigateTo' : function () {
-		},
-		'ajax' : function (param) {
-			param.success();
-		},
-		'adjustHeight' : function () {
-		},
-		'getPerson' : function () {
-			arguments[1]({
-				'OWNER' : { 'fieldValue' : mist.conf.anonymous_user },
-				'VIEWER' : { 'fieldValue' : mist.conf.anonymous_user }
-			});
-		},
-		'getPersonsSync' : function () {
-			arguments[2]([]);
-		},
-		'getFriends' : function (param) {
-			param.callback();
-		},
-		'get' : function () {
-			arguments[2]();
-		},
-		'postActivity' : function () {
-		},
-		'requestShareApp' : function () {
-			arguments[0]({
-				'getData' : function () {
-					return { 'recipientIds' : [] };
-				}
-			});
-		},
-		'person_field_set' : { 'all_field_set' : [] }
-	};
-};
+$os = window.$os ? $.opensocial_simple : load_opensocial_mock();
 
 /*
 	初期化
@@ -254,7 +215,9 @@ mist.add_filters(function () {
 				}, function _t_mist_page_filter_people_callback () {
 					mist.page.data = mist.page.data.replace(/\[%people(.*?)%\]/g, function (_, attr) {
 						var param = parse_attr_param(attr);
-						return mist.social.get_people(param.id)[param.field.toLowerCase()];
+						var people = mist.social.get_people(param.id);
+						if (!people) return '';
+						return people[param.field.toLowerCase()];
 					});
 				});
 			}
@@ -409,13 +372,17 @@ $.extend(mist.social = {}, {
 	'load_friends' : function _t_mist_social_load_friends (param, callback) {
 		if (this.friends.length) return callback();
 		mist.env.loading_queue.push('_t_mist_social_load_friends');
-		var callback = function () {};
-		if ($.isFunction(param)) callback = param;
+		if (!callback) callback = function () {};
+		if ($.isFunction(param)) {
+			callback = param;
+			param = {};
+		};
 		if ($.isFunction(param.callback)) callback = param.callback;
 		var self = this;
 		param.field = 'all_field_set';
 		if (!param.max) param.max = 1000;
 		param.callback = function _t_mist_social_load_friends_callback (fr) {
+			if (!fr) return callback();
 			var friends = self.friends;
 			var cache = self.cache;
 			fr.each(function (p) {
@@ -434,7 +401,7 @@ $.extend(mist.social = {}, {
 	},
 	// mist.social.friendsのid一覧取得 
 	'get_friends_ids' : function _t_mist_social_get_friends_ids () {
-		return $.map(this.friends, function () { return this.id });
+		return $.map(this.friends, function (f) { return f.id });
 	}
 });
 
@@ -468,7 +435,7 @@ $.extend(mist.auth = {}, (function _t_mist_auth () {
 		return function _t_mist_auth_REQUIRE_APP () {
 			if (!mist.conf[user+'_REQUIRE_APP_URL']) return;
 			var has_app = mist.social.person[user].has_app;
-			if (has_app === 'true') return;
+			if (has_app === true) return;
 			return mist.conf[user+'_REQUIRE_APP_URL'];
 		};
 	};
@@ -495,7 +462,7 @@ $.extend(mist.event = {}, {
 			url = param.shift();
 			param = param.join('?');
 			var params = parse_query_param(param);
-			params.recipientIds = result.join(',');
+			params.invite_member = params.recipientIds = result.join(',');
 			$os.get(url, params, function () {});
 		});
 	},
@@ -589,14 +556,15 @@ $.extend(mist.utils = {}, {
 	},
 	// 「日記に書く」画面への遷移 
 	'throw_diary' : function _t_mist_utils_throw_diary (title, body, target) {
-		title = this.replace_appid_person(title);
-		body = this.replace_appid_person(body);
-		var url = this.create_diary_url(title, body);
-		window.open(url, target || '_top');
+		title = title ? mist.utils.replace_appid_person(title) : '';
+		body = body ? mist.utils.replace_appid_person(body) : '';
+		var url = mist.utils.create_diary_url(title, body);
+		return window.open(url, target || '_top');
 	},
 	// アクティビティを投げる 
 	'throw_activity' : function _t_mist_utils_throw_activity (body, param) {
-		body = this.replace_appid_person(body);
+		body = body ? mist.utils.replace_appid_person(body) : '';
+		if (!param) param = {};
 		param['target']
 			? param['target'] = param['target'].split(/\s*,\s*/)
 			: delete param['target']
@@ -751,6 +719,7 @@ $.extend(mist.as = {}, {
 			callback_name = param;
 			param = {};
 		};
+		if (!param) param = {};
 		if (!callback_name) callback_name = 'mist_as_load_friends';
 		mist.social.load_friends(param, function () {
 			as_callback_wrapper(callback_name)({
@@ -763,7 +732,7 @@ $.extend(mist.as = {}, {
 		mist.utils.share_app(as_callback_wrapper(callback_name || 'mist_as_share_app'));
 	},
 	// permanent_link取得 
-	'get_permanent_link' : mist.utils.permanent_link,
+	'get_permanent_link' : mist.utils.create_permanent_link,
 	// 「日記に書く」画面への遷移 
 	'throw_diary' : mist.utils.throw_diary,
 	// アクティビティを投げる 
@@ -801,6 +770,8 @@ function toLowerCaseKey (obj) {
 // flash呼び出し用callback wrapper 
 function as_callback_wrapper (callback_name) {
 	return function (result) {
+		if (!$('object, embed').get(0)) return;
+		if (!$('object, embed').get(0)[callback_name]) return;
 		$('object, embed').get(0)[callback_name](result);
 	};
 };
@@ -884,6 +855,9 @@ var mosixg = function () {
 	return create_regexp(arguments, 'g');
 };
 
+/*
+	DOM nodeにaをappendした場合、相対パスが絶対に書き換えられる問題の対応
+*/
 $.fn.extend({
 	'get_local_path' : function (attr) {
 		return $(this).attr(attr).replace('http://'+location.hostname+'/', '/');
@@ -902,7 +876,7 @@ $.fn.extend({
 //
 // Copyright (C) http://nurucom-archives.hp.infoseek.co.jp/digital/
 //
-// modified by kyo_ago(kayac)
+// modified by @kyo_ago(kayac)
 //
 */
 function get_EscapeEUCJP(){var d="\u3000\u3001\u3002\uff0c\uff0e\u30fb\uff1a"
@@ -1525,3 +1499,46 @@ function b(h){var g=h.charCodeAt(0);return(g<128?(g<16?"%0":"%")
 (g=d.indexOf(h))<0?"%A1%A6":"%"+((g-(g%=94))/94+161).toString(16)
 +"%"+(g+161).toString(16)).toUpperCase()})};function e(b){var f="\u30fb";
 for(var a="";b--;){a+=f}return a}};
+
+/*
+	$osのモック
+*/
+function load_opensocial_mock () {
+	$os = {
+		'getParams' : function () {
+			return '';
+		},
+		'navigateTo' : function () {
+		},
+		'ajax' : function (param) {
+			param.success();
+		},
+		'adjustHeight' : function () {
+		},
+		'getPerson' : function () {
+			arguments[1]({
+				'OWNER' : { 'fieldValue' : mist.conf.anonymous_user },
+				'VIEWER' : { 'fieldValue' : mist.conf.anonymous_user }
+			});
+		},
+		'getPersonsSync' : function () {
+			arguments[2]([]);
+		},
+		'getFriends' : function (param) {
+			param.callback();
+		},
+		'get' : function () {
+			arguments[2]();
+		},
+		'postActivity' : function () {
+		},
+		'requestShareApp' : function () {
+			arguments[0]({
+				'getData' : function () {
+					return { 'recipientIds' : [] };
+				}
+			});
+		},
+		'person_field_set' : { 'all_field_set' : [] }
+	};
+};

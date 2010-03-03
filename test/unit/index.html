@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>mist test</title>
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<link rel="stylesheet" href="http://github.com/jquery/qunit/raw/master/qunit/qunit.css" type="text/css" media="screen" />
+<script type="text/javascript" src="http://github.com/jquery/qunit/raw/master/qunit/qunit.js"></script>
+<script type="text/javascript" src="http://github.com/kyo-ago/mist.js/raw/master/mist.js#no_init"></script>
+<script type="text/javascript">
+$(function () {
+	$.each($os, function (key, val) {
+		if (!$.isFunction(val)) return;
+		$os[key] = function () {
+//			console.debug(key, arguments);
+			val.apply(this, arguments);
+		}
+	});
+
+	test('ActionScript Interface test', function () {
+		function swap_wrapper (test_name) {
+			window.as_callback_wrapper = function (call_back_name) {
+				return function () {
+					equals(test_name, call_back_name);
+				};
+			};
+		};
+		swap_wrapper('mist_as_call_ajax');
+		mist.as.call_ajax();
+
+		swap_wrapper('mist_as_call_get');
+		mist.as.call_get('http://example.com/');
+
+		swap_wrapper('mist_as_call_post');
+		mist.as.call_post('http://example.com/');
+
+		swap_wrapper('mist_as_load_person');
+		mist.as.load_person();
+
+		swap_wrapper('mist_as_load_people');
+		mist.as.load_people([]);
+
+		swap_wrapper('mist_as_load_friends');
+		mist.as.load_friends();
+
+		swap_wrapper('mist_as_share_app');
+		mist.as.share_app();
+
+		equals(mist.as.get_permanent_link(), 'http://mixi.jp/run_appli.pl?id=0&appParams=%2522%2522', 'mist_as_get_permanent_link');
+
+		window.open = function (url) { return url; };
+		equals(mist.as.throw_diary(), 'http://mixi.jp/add_diary.pl?id=undefined&diary_title=&diary_body=', 'mist_as_throw_diary');
+
+		$os.postActivity = function (text) { equals(text, 'test', 'mist_as_throw_activity'); };
+		mist.as.throw_activity('test');
+	});
+
+	$('#qunit-header').text(document.title);
+});
+</script>
+</head>
+<body>
+<h1 id="qunit-header"></h1>
+<h2 id="qunit-banner"></h2>
+<h2 id="qunit-userAgent"></h2>
+<ol id="qunit-tests"></ol>
+</body>
+</html>
