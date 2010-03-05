@@ -319,7 +319,7 @@ $.extend(mist.social = {}, {
 	// mist.social.personの読み込み 
 	'load_person' : function _t_mist_social_load_person (callback) {
 		var self = this;
-		if (self.person.OWNER.id) return;
+		if (self.person.OWNER.id) return callback();
 		mist.env.loading_queue.push('_t_mist_social_load_person');
 		$os.getPerson('all_field_set', function (p) {
 			mist.env.loading_queue.pop();
