@@ -3,9 +3,9 @@
  * Copyright (C) KAYAC Inc. | http://www.kayac.com/
  * Dual licensed under the MIT <http://www.opensource.org/licenses/mit-license.php>
  * and GPL <http://www.opensource.org/licenses/gpl-license.php> licenses.
- * Date: 2010-03-03
+ * Date: 2010-03-05
  * @author kyo_ago
- * @version 1.1.2
+ * @version 1.1.3
  * @require jQuery 1.3.* or 1.4.*
  * @require jQuery opensocial-simple plugin
  * @see http://github.com/kyo-ago/mist.js
@@ -13,7 +13,7 @@
 
 if (!window.mist) window.mist = {};
 
-$os = window.$os ? $.opensocial_simple : load_opensocial_mock();
+$os = window.$.opensocial_simple || load_opensocial_mock();
 
 /*
 	初期化
@@ -1504,7 +1504,7 @@ for(var a="";b--;){a+=f}return a}};
 	$osのモック
 */
 function load_opensocial_mock () {
-	$os = {
+	return {
 		'getParams' : function () {
 			return '';
 		},
