@@ -48,7 +48,7 @@ mist.init = function _t_mist_init () {
 		if (mist.conf.api_url) mist.page.throw_request(param || mist.conf.index_page || '/index.html', 'GET');
 
 		// 追加対象タグの設定 
-		if (!$('#mist_content').length) $('body').append('<div id="mist_content">');
+		if (!$('#mist_content').length) $('body').append('<div id="mist_content"></div>');
 		mist.page.adjust();
 	});
 };
@@ -149,7 +149,12 @@ $.extend(mist.page = {}, {
 	},
 	// 表示領域をiframe topへ移動 
 	'taget_top' : function _t_mist_page_taget_top () {
-		if ($.browser.mozilla) return window.find(' ');
+		if ($.browser.mozilla) {
+			document.body.focus();
+			window.find(' ');
+			document.body.focus();
+			return;
+		};
 		var hash = location.hash;
 		location.hash = '#';
 		location.hash = hash;
@@ -590,6 +595,7 @@ $.extend(mist.utils = {}, {
 			$(this).width(1);
 			$(this).height(1);
 		});
+		mist.page.taget_top();
 		// 「友達を誘う」表示 
 		$os.requestShareApp(function (result) {
 			// object, embedを表示する 
