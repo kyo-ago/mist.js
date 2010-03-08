@@ -85,6 +85,8 @@ mixi外でコーディングの確認を行いたい場合に使用してくだ�
 
 id、nickname、has\_app、profile\_url、thumnail\_url\*に関しては取得に失敗した場合でもダミーの情報を設定します。
 
+[%(OWNER|VIEWER)%]、[%people%]はfieldが指定されていない場合、nicknameが指定されているものと仮定します。
+
  * id
  	 * mixi ID
  * nickname
@@ -126,15 +128,14 @@ id、nickname、has\_app、profile\_url、thumnail\_url\*に関しては取得�
 （「マイミクの招待」機能以外、target widnowはa要素のtarget属性に従います）
 
 1, 「/opensocial/sharefriend/」で始まっていれば「マイミクの招待」機能を呼び出します。  
-URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが設定されている場合、招待画面終了後、「http://example.com/path?recipientIds=招待したmixi id,招待したmixi id...」の形式でリクエストを行います。
+URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが設定されている場合、招待画面終了後、「http://example.com/path?recipientIds=招待したmixi id,招待したmixi id...」の形式でリクエストを行います。設定されているURLが「/」から始まっている場合、先頭にmist.conf.api_urlを追加してアクセスします。
 
 2, 「http://mixi.jp/add\_diary.pl」と一致すれば日記を書く画面への遷移を行います。  
 テンプレート内に以下の形式で日記の内容を記述してください。
 
 	<div id="mist_diary" style="display:none">
 		<input type="text" class="diary_title" value="日記タイトル" />
-		<textarea class="diary_body">日記
-		本文</textarea>
+		<textarea class="diary_body">日記<br />本文</textarea>
 	</div>
 
 3, 「http://mixi.jp/」で始まっていればmixi内へのリンクと判断し、ブラウザの処理にゆだねます。
@@ -350,3 +351,4 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
  * リクエストを自動的にRPCでまとめて通信する機能
  * ブラウザの「戻る」対応
  * テスト支援機能 -> ざっくり実装doc書く
+ * conf内容をテンプレートで使えるようにする汎用filter機能

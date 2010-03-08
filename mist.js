@@ -199,9 +199,10 @@ mist.add_filters(function () {
 			'name' : 'person',
 			'exec' : function _t_mist_page_filter_person () {
 				var person = mist.social.person;
-				mist.page.data = mist.page.data.replace(/\[%(OWNER|VIEWER)\s+field="(\w+)"\s*%\]/gi, function (_, name, field) {
+				mist.page.data = mist.page.data.replace(/\[%(OWNER|VIEWER)\s*(?:field="(\w+)"\s*)?%\]/gi, function (all, name, field) {
 					name = name.toUpperCase();
-					return person[name][field] || person[name][field.toUpperCase()];
+					field = field || 'nickname';
+					return person[name][field] || person[name][field.toUpperCase()] || all;
 				});
 			}
 		},
@@ -218,11 +219,12 @@ mist.add_filters(function () {
 				mist.social.load_people(person, {
 					'field' : 'all_field_set'
 				}, function _t_mist_page_filter_people_callback () {
-					mist.page.data = mist.page.data.replace(/\[%people(.*?)%\]/g, function (_, attr) {
+					mist.page.data = mist.page.data.replace(/\[%people(.*?)%\]/g, function (all, attr) {
 						var param = parse_attr_param(attr);
 						var people = mist.social.get_people(param.id);
 						if (!people) return '';
-						return people[param.field.toLowerCase()];
+						param.field = param.field || 'nickname';
+						return people[param.field.toLowerCase()] || all;
 					});
 				});
 			}
@@ -463,6 +465,7 @@ $.extend(mist.event = {}, {
 			var match = url.match(/#(.+)/);
 			if (!match) return;
 			url = match.pop();
+			if (url.match(/^\//)) url = mist.conf.api_url + url;
 			var param = url.split(/\?/);
 			url = param.shift();
 			param = param.join('?');
@@ -486,6 +489,8 @@ $.extend(mist.event = {}, {
 		// .text()はIEが勝手に改行削るので.val()で取る 
 		var title = diary.find('.diary_title').val();
 		var body = diary.find('.diary_body').val();
+		var target = $(this).attr('target');
+		if (!target) $(this).attr('target', '_blank');
 		$(this).attr('href', mist.utils.create_diary_url(title, body)).click();
 	},
 	// その他リンクの処理 
@@ -556,7 +561,7 @@ $.extend(mist.utils = {}, {
 		return 'http://mixi.jp/add_diary.pl?' + $.param({
 			'id' : mist.social.person.VIEWER.id,
 			'diary_title' : EscapeEUCJP(title),
-			'diary_body' : EscapeEUCJP(body)
+			'diary_body' : EscapeEUCJP(body.replace(/\\n|<br\s*\/?>/g, '\n'))
 		}).replace(/%25/g, '%');
 	},
 	// 「日記に書く」画面への遷移 
@@ -564,7 +569,7 @@ $.extend(mist.utils = {}, {
 		title = title ? mist.utils.replace_appid_person(title) : '';
 		body = body ? mist.utils.replace_appid_person(body) : '';
 		var url = mist.utils.create_diary_url(title, body);
-		return window.open(url, target || '_top');
+		return window.open(url, target || '_blank');
 	},
 	// アクティビティを投げる 
 	'throw_activity' : function _t_mist_utils_throw_activity (body, param) {
@@ -753,6 +758,12 @@ function as_call_template (method, default_callback_name) {
 			data = null;
 		};
 		if (!callback_name) callback_name = default_callback_name
+		method = method.toUpperCase();
+		if (method === 'POST') {
+			var flag;
+			$.map(data, function () { return !(flag = true); });
+			if (flag) data[Math.random()] = Math.random();
+		};
 		$os.ajax({
 			'url' : url, 
 			'data' : data,
