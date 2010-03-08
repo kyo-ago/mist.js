@@ -128,7 +128,9 @@ id、nickname、has\_app、profile\_url、thumnail\_url\*に関しては取得�
 （「マイミクの招待」機能以外、target widnowはa要素のtarget属性に従います）
 
 1, 「/opensocial/sharefriend/」で始まっていれば「マイミクの招待」機能を呼び出します。  
-URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが設定されている場合、招待画面終了後、「http://example.com/path?recipientIds=招待したmixi id,招待したmixi id...」の形式でリクエストを行います。設定されているURLが「/」から始まっている場合、先頭にmist.conf.api_urlを追加してアクセスします。
+URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが設定されている場合、招待画面終了後、「http://example.com/path?recipientIds=招待したmixi id,招待したmixi id...」の形式でリクエストを行います。設定されているURLが「/」から始まっている場合、先頭にmist.conf.api_urlを追加してアクセスします。  
+クリエストからのレスポンスが「<」から始まっている場合、ページ内容の返却として通常の画面遷移と同じ処理を行います。  
+クリエストからのレスポンスが「{"redirect" : "/api/path"}」形式の場合、/api/pathへリダイレクトを行います。
 
 2, 「http://mixi.jp/add\_diary.pl」と一致すれば日記を書く画面への遷移を行います。  
 テンプレート内に以下の形式で日記の内容を記述してください。

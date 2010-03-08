@@ -3,9 +3,9 @@
  * Copyright (C) KAYAC Inc. | http://www.kayac.com/
  * Dual licensed under the MIT <http://www.opensource.org/licenses/mit-license.php>
  * and GPL <http://www.opensource.org/licenses/gpl-license.php> licenses.
- * Date: 2010-03-05
+ * Date: 2010-03-08
  * @author kyo_ago
- * @version 1.1.3
+ * @version 1.1.4
  * @require jQuery 1.3.* or 1.4.*
  * @require jQuery opensocial-simple plugin
  * @see http://github.com/kyo-ago/mist.js
@@ -471,7 +471,23 @@ $.extend(mist.event = {}, {
 			param = param.join('?');
 			var params = parse_query_param(param);
 			params.invite_member = params.recipientIds = result.join(',');
-			$os.get(url, params, function () {});
+			$os.get(url, params, function (data) {
+				// htmlっぽい？ 
+				if (data.match(/\s*</)) {
+					var page = mist.page;
+					page.serialize_url = page.path = url;
+					var param = $.param(params);
+					if (param) page.serialize_url += (page.serialize_url.match(/\?/) ? '&' : '?') + param;
+					page.param = {};
+					return mist.page.load(data);
+				};
+				// JSONっぽい？ 
+				if (data.match(/\s*\{/)) {
+					var json = gadgets.json.parse(data);
+					if (!json || !json.redirect) return;
+					return mist.page.get(json.redirect);
+				};
+			});
 		});
 	},
 	// 「日記に書く」リンクの処理 
