@@ -107,7 +107,7 @@ $.extend(mist.page = {}, {
 		var cookie = $.param(mist.page.cookie);
 		$os.ajax({
 			'url' : mist.conf.api_url + mist.page.path,
-			'data' : $.extend(mist.page.param, mist.page.base_param),
+			'data' : $.extend({}, mist.page.param, mist.page.base_param),
 			'METHOD' : method.toUpperCase(),
 			'HEADERS' : cookie ? { 'Cookie' : cookie } : undefined,
 			'success' : function _t_mist_page_throw_request_success (data) {
@@ -615,7 +615,7 @@ mist.event.add_complate({
 $.extend(mist.utils = {}, {
 	// permanent_link URLの組み立て 
 	'create_permanent_link' : function _t_mist_utils_create_permanent_link () {
-		return 'http://mixi.jp/run_appli.pl?id='+mist.env.app_id+'&appParams=' + encodeURIComponent(encodeURIComponent('"' + mist.page.serialize_url + '"'));
+		return 'http://mixi.jp/run_appli.pl?id='+mist.env.app_id + '&owner_id=' + mist.social.person.OWNER.id + '&appParams=' + encodeURIComponent(encodeURIComponent('"' + mist.page.serialize_url + '"'));
 	},
 	// 「日記に書く」URLの組み立て 
 	'create_diary_url' : function _t_mist_utils_create_diary_url (title, body) {
