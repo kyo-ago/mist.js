@@ -75,6 +75,8 @@ $.extend(mist.page = {}, {
 	'param' : {},
 	// 常に保持されるparam 
 	'base_param' : {},
+	// テンプレート内で使用可能な変数 
+	'template_vars' : {},
 	// 状態のserialize 
 	'serialize_url' : '',
 	// 現在のserialize urlを作成 
@@ -108,12 +110,12 @@ $.extend(mist.page = {}, {
 			'data' : $.extend(mist.page.param, mist.page.base_param),
 			'METHOD' : method.toUpperCase(),
 			'HEADERS' : cookie ? { 'Cookie' : cookie } : undefined,
-			'success' : function _t_mist_page_throw_request_success () {
+			'success' : function _t_mist_page_throw_request_success (data) {
 				self.serialize_url = self.path;
 				var param = $.param(self.param);
 				if (param) self.serialize_url += (self.serialize_url.match(/\?/) ? '&' : '?') + param;
 				self.param = {};
-				self.load.apply(self, arguments);
+				mist.template.load(data);
 			}
 		});
 	},
@@ -160,15 +162,49 @@ $.extend(mist.page = {}, {
 		location.hash = hash;
 	}
 });
+
+/*
+	ページ遷移関係
+*/
+$.extend(mist.template = {}, {
+	// 現在のテンプレートhtml(String) 
+	'data' : '',
+	// テンプレート内で使用可能な変数 
+	'vars' : {},
+	// テンプレート内容の読み込み 
+	'load' : function _t_mist_template_load (data) {
+		var self = mist.template;
+		self.data = data;
+		self.call_filter();
+		$(function () {
+			var exec = function  () {
+				self.data = self.data.replace(/[\r\n]/g, '');
+				$('#mist_content').html(self.data);
+				if (!mist.conf.absolute_height) mist.page.adjust();
+				mist.page.taget_top();
+				mist.event.call_complate();
+			};
+			if (!mist.env.is_loading()) return exec();
+			var timer = setInterval(function () {
+				if (mist.env.is_loading()) return;
+				clearInterval(timer);
+				exec();
+			}, 100);
+		});
+	}
+});
+
+
 // 各ページの読み込みfilter eventの追加（filter_stack, add_filter, call_filter） 
-add_stack_method(mist.page, 'filter');
+add_stack_method(mist.template, 'filter');
 mist.add_filters(function () {
-	mist.page.add_filter([
+	var self = mist.template;
+	mist.template.add_filter([
 		// cookie取得 
 		{
 			'name' : 'get_cookie',
-			'exec' : function _t_mist_page_filter_get_cookie () {
-				var header = mist.page.data.split('<\/html>');
+			'exec' : function _t_mist_template_filter_get_cookie () {
+				var header = self.data.split('<\/html>');
 				header.shift();
 				header = header.shift();
 				if (!header) return;
@@ -182,24 +218,24 @@ mist.add_filters(function () {
 		// mist_contentの間を取る 
 		{
 			'name' : 'strip_mist_content',
-			'exec' : function _t_mist_page_filter_strip_mist_content () {
-				var tags = mist.conf.mist_page_filter_strip_mist_content_tags || ['<div id="mist_content">', '<!-- /#mist_content --><\/div>'];
-				mist.page.data = get_inner_text(mist.page.data, tags[0], tags[1]) || mist.page.data;
+			'exec' : function _t_mist_template_filter_strip_mist_content () {
+				var tags = mist.conf.mist_template_filter_strip_mist_content_tags || ['<div id="mist_content">', '<!-- /#mist_content --><\/div>'];
+				self.data = get_inner_text(self.data, tags[0], tags[1]) || self.data;
 			}
 		},
 		// [%app_id%]の置き換え 
 		{
 			'name' : 'app_id',
-			'exec' : function _t_mist_page_filter_app_id () {
-				mist.page.data = mist.page.data.replace(/\[%app_id\s*%\]/g, mist.env.app_id);
+			'exec' : function _t_mist_template_filter_app_id () {
+				self.data = self.data.replace(/\[%app_id\s*%\]/g, mist.env.app_id);
 			}
 		},
 		// [%(OWNER|VIEWER) field="(\w+)"%]の置き換え 
 		{
 			'name' : 'person',
-			'exec' : function _t_mist_page_filter_person () {
+			'exec' : function _t_mist_template_filter_person () {
 				var person = mist.social.person;
-				mist.page.data = mist.page.data.replace(/\[%(OWNER|VIEWER)\s*(?:field="(\w+)"\s*)?%\]/gi, function (all, name, field) {
+				self.data = self.data.replace(/\[%(OWNER|VIEWER)\s*(?:field="(\w+)"\s*)?%\]/gi, function (all, name, field) {
 					name = name.toUpperCase();
 					field = field || 'nickname';
 					return person[name][field] || person[name][field.toUpperCase()] || all;
@@ -209,8 +245,8 @@ mist.add_filters(function () {
 		// [%people id="(\d+)" field="(\w+)"%]の置き換え 
 		{
 			'name' : 'people',
-			'exec' : function _t_mist_page_filter_people () {
-				var match = mist.page.data.match(/\[%people.+?%\]/g);
+			'exec' : function _t_mist_template_filter_people () {
+				var match = self.data.match(/\[%people.+?%\]/g);
 				if (!match) return;
 				var person = $.map(match, function (m) {
 					var attr = m.match(/\s(.+?)%\]/);
@@ -218,8 +254,8 @@ mist.add_filters(function () {
 				});
 				mist.social.load_people(person, {
 					'field' : 'all_field_set'
-				}, function _t_mist_page_filter_people_callback () {
-					mist.page.data = mist.page.data.replace(/\[%people(.*?)%\]/g, function (all, attr) {
+				}, function _t_mist_template_filter_people_callback () {
+					self.data = self.data.replace(/\[%people(.*?)%\]/g, function (all, attr) {
 						var param = parse_attr_param(attr);
 						var people = mist.social.get_people(param.id);
 						if (!people) return '';
@@ -232,13 +268,13 @@ mist.add_filters(function () {
 		// [%friends filter="(\w+)"%]の置き換え 
 		{
 			'name' : 'friends',
-			'exec' : function _t_mist_page_filter_friends () {
-				var match = mist.page.data.match(/\[%friends(.*?)%\]/);
+			'exec' : function _t_mist_template_filter_friends () {
+				var match = self.data.match(/\[%friends(.*?)%\]/);
 				if (!match) return;
 				var params = match.length !== 1 ? parse_attr_param(match.pop()) : {};
 				params.filter = params.filter ? params.filter.toUpperCase() : 'HAS_APP';
-				params.callback = function _t_mist_page_filter_friends_callback () {
-					mist.page.data = mist.page.data.replace(/\[%friends(.*?)%\]/g, mist.social.get_friends_ids().join(','));
+				params.callback = function _t_mist_template_filter_friends_callback () {
+					self.data = self.data.replace(/\[%friends(.*?)%\]/g, mist.social.get_friends_ids().join(','));
 				};
 				mist.social.load_friends(params);
 			}
@@ -246,17 +282,27 @@ mist.add_filters(function () {
 		// [%permanent_link%]の置き換え 
 		{
 			'name' : 'permanent_link',
-			'exec' : function _t_mist_page_filter_permanent_link () {
-				mist.page.data = mist.page.data.replace(/\[%permanent_link\s*%\]/g, mist.utils.create_permanent_link());
+			'exec' : function _t_mist_template_filter_permanent_link () {
+				self.data = self.data.replace(/\[%permanent_link\s*%\]/g, mist.utils.create_permanent_link());
+			}
+		},
+		// [%var name="(\w+)"%]の置き換え 
+		{
+			'name' : 'var',
+			'exec' : function _t_mist_template_filter_var () {
+				self.vars.doc_root_url = mist.conf.doc_root_url;
+				self.data = self.data.replace(/\[%var name="(\w+)"%\]/g, function (all, name) {
+					return mist.conf[name] || all;
+				});
 			}
 		}
 	]);
 
 	// /から始まる画像urlの修正 
-	if (mist.conf.doc_root_url) mist.page.add_filter({
+	if (mist.conf.doc_root_url) self.add_filter({
 		'name' : 'doc_root_url',
-		'exec' : function _t_mist_page_filter_doc_root_url () {
-			mist.page.data = mist.page.data.replace(/(src=['"])\//g, '$1'+mist.conf.doc_root_url+'/');
+		'exec' : function _t_mist_template_filter_doc_root_url () {
+			self.data = self.data.replace(/(src=['"])\//g, '$1'+mist.conf.doc_root_url+'/');
 		}
 	});
 });

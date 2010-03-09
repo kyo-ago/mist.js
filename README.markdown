@@ -157,7 +157,7 @@ mist.confに設定可能な項目は以下の通りです。
  	最初に取得するpath（api\_url + index\_pageを最初に取得）。初期値'/index.html'
  * doc\_root\_url  
  	画像URLの先頭につけられるURL。img[src]が/から始まっている場合使用（相対指定の場合使用しない）。初期値undefined（先頭に追加しない）
- * mist\_page\_filter\_strip\_mist\_content\_tags  
+ * mist\_template\_filter\_strip\_mist\_content\_tags  
  	APIの返却値から切り出す文字列範囲。['開始文字列','終了文字列']の形式で指定。初期値\[&#039;&lt;div id=&quot;mist\_content&quot;&gt;&#039;, &#039;&lt;\!\-\- /#mist\_content --&gt;&lt;\/div&gt;&#039;\]。DOM element、正規表現ではなく、単純な文字列であることに注意
  * auto\_adjust  
  	立て幅の自動調整制御。falseの場合調整を行わない。初期値true（自動調整を行う）
@@ -202,14 +202,14 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
 
 設定できる内容は以下の通りです。
 
- * no\_init  
+ * no\_init=true  
  	初期URLの自動読み込みを行わない。初期URLのパラメータとしてユーザ情報を使用する場合や、flashのみのコンテンツの場合に使用
 
 ### ActionScript用API
 
 以下のAPIはActionScriptから呼び出されることを想定しています。
 
-以下の内容はまだ検証中です。
+以下の内容は実装はしていますが、まだ仕様を検証中です。
 
  * mist.as.call\_get  
  	AUTHORIZATION = SIGNEDでのGET通信を行う。

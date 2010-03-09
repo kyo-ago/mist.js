@@ -64,4 +64,14 @@ mist.event.add_complate(/10_cookie.html/, function (match) {
 });
 mist.event.add_complate(/11_permanent_link.html/, function (match) {
 	if ($('a').attr('href') !== 'http://mixi.jp/run_appli.pl?id=15936&appParams=%2522%252F11_permanent_link.html%2522') console.error(match);
+	mist.page.get('/12_var.html');
+});
+
+mist.event.add_complate(/12_var.html/, function (match) {
+	$('a').each(function () {
+		var href = $(this).attr('href');
+		var text = $(this).text();
+		if (href == text) return;
+		console.error(href, text);
+	});
 });

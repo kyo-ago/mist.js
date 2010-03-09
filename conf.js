@@ -1,7 +1,6 @@
 $.extend(mist.conf, {
 	'index_page' : '/index.html',
-	'doc_root_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/',
-	'api_url' : 'http://0-9.sakura.ne.jp/js/mixiapp_framework_mist/test/'
+	'doc_root_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/'
 });
 
 /*
