@@ -292,7 +292,7 @@ mist.add_filters(function () {
 			'exec' : function _t_mist_template_filter_var () {
 				self.vars.doc_root_url = mist.conf.doc_root_url;
 				self.data = self.data.replace(/\[%var name="(\w+)"%\]/g, function (all, name) {
-					return mist.conf[name] || all;
+					return self.vars[name] || all;
 				});
 			}
 		}
