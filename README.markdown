@@ -16,6 +16,8 @@ JSを書かなくてもそこそこリッチなmixi appが作れるフレーム�
  * 「友達を誘う」機能
  * cookieのサポート
  * パーマネントリンク対応
+ * 複数ユーザ情報をまとめて取得する機能
+ * google analytics連携
 
 また、ActionScript用のAPIも提供しています。
 
@@ -58,8 +60,8 @@ mixi外でコーディングの確認を行いたい場合に使用してくだ�
 使用できるパラメータは「fieldに指定できる値」を参照してください。
  * [%people id="(\d+)" field="(\w+)"%]は指定IDのmixiユーザ情報に置き換えられます。  
 使用できるパラメータは「fieldに指定できる値」を参照してください。
- * [%friends filter="(\w+)"%]はマイミクIDを「,」で区切ったものに置き換えられます。  
-標準ではマイミクのうち、同じアプリを使用しているIDのみを取得します。filterにallを指定すると全マイミクのIDを取得します。  
+ * [%friends filter="(has_app|all)"%]はマイミクIDを「,」で区切ったものに置き換えられます。  
+has_appが指定された場合、マイミクのうち同じアプリを使用しているIDのみを取得します。filterにallを指定すると全マイミクのIDを取得します。filter自体を指定しない場合、has_appが指定されたものとして動作します。  
 リンク先のパラメータに指定し、サーバサイドでページング、一覧表示を行うことを想定しています。
  * 以下のようなhtmlをアクティビティとして送信します。  
 （アクティビティのみテンプレートから削除されないため、「style="display:none"」を設定してください）
@@ -129,7 +131,7 @@ id、nickname、has\_app、profile\_url、thumnail\_url\*に関しては取得�
 
 1, 「/opensocial/sharefriend/」で始まっていれば「マイミクの招待」機能を呼び出します。  
 URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが設定されている場合、招待画面終了後、「http://example.com/path?recipientIds=招待したmixi id,招待したmixi id...」の形式でリクエストを行います。設定されているURLが「/」から始まっている場合、先頭にmist.conf.api_urlを追加してアクセスします。  
-クリエストからのレスポンスが「<」から始まっている場合、ページ内容の返却として通常の画面遷移と同じ処理を行います。  
+クリエストからのレスポンスが「&lt;」から始まっている場合、ページ内容の返却として通常の画面遷移と同じ処理を行います。  
 クリエストからのレスポンスが「{"redirect" : "/api/path"}」形式の場合、/api/pathへリダイレクトを行います。
 
 2, 「http://mixi.jp/add\_diary.pl」と一致すれば日記を書く画面への遷移を行います。  
@@ -164,6 +166,8 @@ mist.confに設定可能な項目は以下の通りです。
  * absolute\_height  
  	立て幅の絶対指定。Numberで指定。初期値undefined
  * permanent\_link  
+ 	すべてのリンクを固定URLに書き換える。中クリックが動作するようになる代わり若干遅くなる。trueが設定された場合、リンククリック時に固定URLでの画面遷移を行う。初期値undefined
+ * replace\_href  
  	パーマネントリンクモード。trueが設定された場合、リンククリック時に固定URLでの画面遷移を行う。初期値undefined
  * OWNER\_REQUIRE\_APP\_URL  
  	オーナーにアプリの所有を要求する（所有していない場合このURLへ移動）。undefiendが指定された場合画面遷移を行わない。初期値http://mixi.jp/join\_appli.pl?id=app\_id
@@ -183,6 +187,9 @@ mist.confに設定可能な項目は以下の通りです。
 	 	'http://mixi.jp/'
 	 * thumnail\_url  
 	 	'http://img.mixi.jp/img/basic/common/noimage\_member76.gif'
+ * analytics\_key  
+ 	Google Analyticsのkey（例 : UA-xxxxxxxx-x）このパラメータを使用する場合、gadget.xmlに&lt;Require feature="analytics" /&gt;を設定する。出力形式は以下の通り。  
+ 	'/(canvas|profile|home)/' + mist.page.serialize_url
 
 mist.jsを読み込んだ後に以下の形式で設定してください。
 
@@ -208,8 +215,6 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
 ### ActionScript用API
 
 以下のAPIはActionScriptから呼び出されることを想定しています。
-
-以下の内容は実装はしていますが、まだ仕様を検証中です。
 
  * mist.as.call\_get  
  	AUTHORIZATION = SIGNEDでのGET通信を行う。
@@ -239,11 +244,8 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
  	 	 * id\_list  
  	 	 	取得対象のmixi id。String、Number、Array(String or Number)での指定が可能
  	 	 * callback\_name  
- 	 	 	callback function name。String。初期値mist\_as\_load\_person。引数は以下の通り(Object)
- 	 	 	{  
- 	 	 		'OWNER' : アプリオーナーのpeople object,  
- 	 	 		'VIEWER' : アプリビュアーのpeople object  
- 	 	 	}
+ 	 	 	callback function name。String。初期値mist\_as\_load\_person。引数は以下の通り(Object)  
+ 	 	 	{ 'OWNER' : アプリオーナーのpeople object, 'VIEWER' : アプリビュアーのpeople object }
  * mist.as.load\_people  
  	ユーザ情報を取得する。
  	 * 引数
@@ -267,7 +269,7 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
  	 * 引数
 	 	 * callback\_name  
  	 	 	callback function name。String。初期値mist\_as\_share\_app。引数は以下の通り  
- 	 	 	[誘ったmixi id, ...]
+ 	 	 	{ 'recipientIds' : [誘ったmixi id, ...] }
  * mist.as.get\_permanent\_link  
   	現在表示している画面の固定リンク用URLを取得する。
  	 * 返り値  
@@ -345,12 +347,13 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
 （ASの場合、非signedで通信する必要性が低いため）
 
 ### TODO
- * google analytics連携
  * Message API
  * Albums API
  * Browser Cache
  * JS API documents
- * リクエストを自動的にRPCでまとめて通信する機能
+ * a[href="#top"]対応
  * ブラウザの「戻る」対応
+ * デバッグモード機能（固定URLの表示。サーバ通信の表示。DOM展開前の表示）
+ * 既読リンク、中クリック対応 -> ざっくり実装。既読リンクは要検討
  * テスト支援機能 -> ざっくり実装doc書く
- * conf内容をテンプレートで使えるようにする汎用filter機能
+ * conf内容をテンプレートで使えるようにする機能 -> ざっくり実装doc書く

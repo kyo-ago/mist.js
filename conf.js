@@ -21,6 +21,12 @@ $.extend(mist.conf, {
 	// 立て幅の自動調整を行わない 
 	'auto_adjust' : true,
 	// パーマネントリンクモード 
-	'permanent_link' : false
+	'permanent_link' : false,
+	// すべてのリンクを固定URLに書き換える（若干遅くなる） 
+	'replace_href' : false,
+	// google analytics key 
+	'analytics_key' : 'UA-xxxxxxxx-x',
+	// デバッグモード 
+	'debug_mode' : false
 });
 */
