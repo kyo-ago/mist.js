@@ -104,7 +104,7 @@ id、nickname、has\_app、profile\_url、thumnail\_url\*に関しては取得�
  * profile\_url
  	 * プロフィールURL
  * current\_location\_text
- 	 * current\_location text（都道府県のみ）
+ 	 * current\_location text（北海道～沖縄県のいずれか）
  * gender\_key
  	 * gender key（MALE or FEMALE）
  * gender\_text
@@ -112,17 +112,17 @@ id、nickname、has\_app、profile\_url、thumnail\_url\*に関しては取得�
  * age
  	 * 年齢
  * date\_of\_birth\_0day
- 	 * 0補完された誕生日付
+ 	 * 0補完された誕生日付（01～31のいずれか）
  * date\_of\_birth\_0month
- 	 * 0補完された誕生月
+ 	 * 0補完された誕生月（01～12のいずれか）
  * date\_of\_birth\_day
- 	 * 誕生日付
+ 	 * 誕生日付（1～31のいずれか）
  * date\_of\_birth\_month
- 	 * 誕生月
+ 	 * 誕生月（1～12のいずれか）
  * date\_of\_birth\_text
- 	 * 0補完された誕生月日（mixiのプロフィールと同じ形式）
+ 	 * 0補完された誕生月日（01月01～12月31日のいずれか。mixiのプロフィールと同じ形式）
  * blood\_type
- 	 * 血液型
+ 	 * 血液型（A～ABのいずれか）
 
 ### linkの扱いに関して
 
@@ -254,20 +254,20 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
   	 	 * param  
   	 	 	object。
 	 	 * callback\_name  
- 	 	 	callback function name。String。初期値mist\_as\_load\_people。引数は以下の通り  
+ 	 	 	callback function name。String。初期値mist\_as\_load\_people。引数は以下の通り。peopleはid\_listの順番で返ることが保証される  
  	 	 	{ 'people' : [people object, ...] }
  * mist.as.load\_friends  
  	マイミク情報を取得する。
  	 * 引数
  	 	 * callback\_name  
  	 	 	callback function name。String。初期値mist\_as\_load\_friends。引数は以下の通り  
- 	 	 	{ 'friends' : [people object, ...] }
+ 	 	 	{ 'friends' : [people object, ...]/* マイミクが居ない場合[] */ }
  * mist.as.share\_app  
   	「友達を誘う」を実行する。マイミク一覧表示中はflashは重ね合わせ問題の回避のため非表示状態となる。
  	 * 引数
 	 	 * callback\_name  
  	 	 	callback function name。String。初期値mist\_as\_share\_app。引数は以下の通り  
- 	 	 	{ 'recipientIds' : [誘ったmixi id, ...] }
+ 	 	 	{ 'recipientIds' : [誘ったmixi id, ...]/* 誘ったマイミクが居ない場合[] */ }
  * mist.as.get\_permanent\_link  
   	現在表示している画面の固定リンク用URLを取得する。
  	 * 返り値  
@@ -313,7 +313,7 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
 	 * profile\_url
 	 	 * プロフィールURL
 	 * current\_location\_text
-	 	 * current\_location text（都道府県のみ）
+	 	 * current\_location text（北海道～沖縄県のいずれか）
 	 * gender\_key
 	 	 * gender key（MALE or FEMALE）
 	 * gender\_text
@@ -321,19 +321,19 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
 	 * age
 	 	 * 年齢
 	 * date\_of\_birth\_0day
-	 	 * 0補完された誕生日付
+	 	 * 0補完された誕生日付（01～31のいずれか）
 	 * date\_of\_birth\_0month
-	 	 * 0補完された誕生月
+	 	 * 0補完された誕生月（01～12のいずれか）
 	 * date\_of\_birth\_day
-	 	 * 誕生日付
+	 	 * 誕生日付（1～31のいずれか）
 	 * date\_of\_birth\_month
-	 	 * 誕生月
+	 	 * 誕生月（1～12のいずれか）
 	 * date\_of\_birth\_text
-	 	 * 0補完された誕生月日（mixiのプロフィールと同じ形式）
+	 	 * 0補完された誕生月日（01月01～12月31日のいずれか。mixiのプロフィールと同じ形式）
 	 * has\_app
-	 	 * アプリをインストールしているか否か（true or false）
+	 	 * アプリをインストールしているか否か（true or false。boolean）
 	 * blood\_type
-	 	 * 血液型
+	 	 * 血液型（A～ABのいずれか）
 
 ### SIGNED通信に関して
 
