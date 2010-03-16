@@ -259,8 +259,6 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
  * mist.as.load\_friends  
  	マイミク情報を取得する。
  	 * 引数
- 	 	 * id\_list  
- 	 	 	取得対象のmixi id。String、Number、Array(String or Number)での指定が可能
  	 	 * callback\_name  
  	 	 	callback function name。String。初期値mist\_as\_load\_friends。引数は以下の通り  
  	 	 	{ 'friends' : [people object, ...] }
