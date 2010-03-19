@@ -158,7 +158,8 @@ $.extend(mist.template = {}, {
 		$(function () {
 			var exec = function  () {
 				self.data = self.data.replace(/[\r\n]/g, '');
-				$('#mist_content').html(self.data);
+				// Fxのwindow.find(' ');用スペース 
+				$('#mist_content').html(' ' + self.data);
 				if (!mist.conf.absolute_height) mist.page.adjust();
 				mist.page.taget_top();
 				mist.event.call_complate();
@@ -610,13 +611,13 @@ $.extend(mist.event = {}, {
 		var href = $(this).get_local_path();
 
 		// mixi内リンクはブラウザに処理させる 
-		if (href.match(mosix('^http://mixi\\.jp/'))) return;
+		if (href.match(mosix('^http://(?:[^/]+\\.)?mixi(:?\\.co)?\\.jp/'))) return;
 
 		env.preventDefault();
+		// 「#」開始はトップへ画面遷移 
+		if (href.match(mosix('^/?#'))) return mist.page.taget_top();
 		// 相対指定はAPIアクセス 
 		if (href.match(mosix('^/'))) return mist.page.get(href);
-		// 「#」開始はトップへ画面遷移 
-		if (href.match(mosix('^/?#'))) return mist.page.adjust();
 		// 外部リンク 
 		if (href.match(mosix('^https?://'))) return mixi.util.requestExternalNavigateTo(href);
 	},
@@ -855,12 +856,35 @@ $.extend(mist.as = {}, {
 	// permanent_link取得 
 	'get_permanent_link' : mist.utils.create_permanent_link,
 	// 「日記に書く」画面への遷移 
-	'throw_diary' : mist.utils.throw_diary,
+	'throw_diary' : function _t_mist_as_throw_diary () {
+		mist.utils.throw_diary.apply(this, arguments);
+	},
 	// アクティビティを投げる 
-	'throw_activity' : mist.utils.throw_activity,
+	'throw_activity' : function _t_mist_as_throw_activity () {
+		mist.utils.throw_activity.apply(this, arguments);
+	},
 	// 画面遷移 
-	'page_get' : function (page) {
-		setTimeout(function () { mist.page.get(page); }, 0);
+	'navigate_to' : function _t_mist_as_navigate_to (href, target) {
+		setTimeout(function _t_mist_as_navigate_to_set_timeout () {
+			// mixi内リンクはブラウザに処理させる 
+			if (href.match(mosix('^http://(?:[^/]+\\.)?mixi(:?\\.co)?\\.jp/'))) return window.open(href, target || '_top');
+			// 「#」開始はトップへ画面遷移 
+			if (href.match(mosix('^/?#'))) return mist.page.taget_top();
+			// 相対指定はAPIアクセス 
+			if (href.match(mosix('^/'))) return mist.page.get(href);
+			// 外部リンク 
+			if (href.match(mosix('^https?://'))) return mixi.util.requestExternalNavigateTo(href, mixi.util.ExternalSiteType[target.toUpperCase()]);
+		}, 0);
+	},
+	// 値の取得、保存 
+	'get_owner_data' : function _t_mist_as_get_owner_data (callback_name) {
+		$os.getOwnerData(as_callback_wrapper(callback_name || 'mist_as_get_owner_data'));
+	},
+	'get_viewer_data' : function _t_mist_as_get_viewer_data (callback_name) {
+		$os.getViewerData(as_callback_wrapper(callback_name || 'mist_as_get_viewer_data'));
+	},
+	'post_viewer_data' : function _t_mist_as_post_viewer_data (values, callback_name) {
+		$os.postViewerData(values, as_callback_wrapper(callback_name || 'mist_as_post_viewer_data'));
 	}
 });
 

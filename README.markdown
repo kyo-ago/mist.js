@@ -290,6 +290,34 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
  	 	 	 	アクティビティを送信するマイミクID（複数存在素場合「,」で区切る）
  	 	 	 * media\_item  
  	 	 	 	アクティビティに表示する画像URL（複数存在素場合「,」で区切る。最大3つ。gif,jpg,pngのみ認識）
+ * mist.as.navigate\_to  
+  	画面遷移を行う。
+ 	 * 引数
+ 	 	 * href  
+ 	 	 	URI。以下のように処理される。
+ 	 	 	 * http://*mixi.jp、http://*mixi.co.jpから始まる場合、同じwindowで画面遷移する。
+ 	 	 	 * /#の場合、画面上までwindowをscrollさせる。
+ 	 	 	 * /から始まる場合、APIにURLを投げて通常のhtmlと同じ画面遷移を行う。
+ 	 	 	 * http://、https://から始まる場合、mixi.util.requestExternalNavigateToを使った画面遷移を行う。
+ 	 	 * target  
+ 	 	 	target option。string。設定可能な内容は以下の通り
+ 	 	 	 * http://*mixi.jp、http://*mixi.co.jpから始まる場合、window.openの第2引数と解釈する（未指定時'_top'）
+ 	 	 	 * http://、https://から始まる場合、'PAYMENT'を指定すると外部決済サービスへ形式での遷移を行う（未指定時一般サイトへの遷移）
+ * mist.as.get\_owner\_data  
+  	OWNERの保存されている情報を取得する（mist.as.post\_viewer\_dataで保存した情報しか取得できない）
+ 	 * 引数
+ 	 	 * callback\_name  
+ 	 	 	callback function name。String。初期値mist\_as\_get\_owner\_data。引数は保存されているObject
+ * mist.as.get\_viewer\_data  
+  	VIEWERの保存されている情報を取得する（mist.as.post\_viewer\_dataで保存した情報しか取得できない）
+ 	 * 引数
+ 	 	 * callback\_name  
+ 	 	 	callback function name。String。初期値mist\_as\_get\_viewer\_data。引数は保存されているObject
+ * mist.as.post\_viewer\_data  
+  	VIEWERに情報を取得する（mist.as.post\_viewer\_dataで保存した情報を上書きする）
+ 	 * 引数
+ 	 	 * callback\_name  
+ 	 	 	callback function name。String。初期値mist\_as\_post\_viewer\_data。引数はなし
 
 以下の内容はActionScript用APIで共通の内容です。
 
