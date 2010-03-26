@@ -1,11 +1,13 @@
 $.extend(mist.conf, {
-	'index_page' : '/index.html',
+	'api_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/',
 	'doc_root_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/'
 });
 
 /*
 その他の設定情報
 $.extend(mist.conf, {
+	// APIの送信先 
+	'api_url' : '',
 	// src="/の書き換え先 
 	'doc_root_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/'
 	// オーナーにアプリの所有を要求しない 

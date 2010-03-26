@@ -11,7 +11,7 @@ $(function () {
 	$.each($os, function (key, val) {
 		if (!$.isFunction(val)) return;
 		$os[key] = function () {
-//			console.debug(key, arguments);
+			console.debug(key, arguments);
 			val.apply(this, arguments);
 		}
 	});
@@ -35,6 +35,10 @@ $(function () {
 
 		swap_wrapper('mist_as_load_person');
 		mist.as.load_person();
+		mist.social.add_person_mock({
+			'OWNER' : { 'id' : 0 },
+			'VIEWER' : { 'id' : 0 }
+		});
 
 		swap_wrapper('mist_as_load_people');
 		mist.as.load_people([]);
@@ -45,10 +49,12 @@ $(function () {
 		swap_wrapper('mist_as_share_app');
 		mist.as.share_app();
 
-		equals(mist.as.get_permanent_link(), 'http://mixi.jp/run_appli.pl?id=0&appParams=%2522%2522', 'mist_as_get_permanent_link');
+		equals(mist.as.get_permanent_link(), 'http://mixi.jp/run_appli.pl?id=0&owner_id=0&appParams=%2522%2522', 'mist_as_get_permanent_link');
 
-		window.open = function (url) { return url; };
-		equals(mist.as.throw_diary(), 'http://mixi.jp/add_diary.pl?id=undefined&diary_title=&diary_body=', 'mist_as_throw_diary');
+		window.open = function (url) {
+			equals(url, 'http://mixi.jp/add_diary.pl?id=0&diary_title=&diary_body=', 'mist_as_throw_diary');
+		};
+		mist.as.throw_diary();
 
 		$os.postActivity = function (text) { equals(text, 'test', 'mist_as_throw_activity'); };
 		mist.as.throw_activity('test');
