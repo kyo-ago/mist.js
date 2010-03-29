@@ -63,7 +63,8 @@ mist.event.add_complate(/10_cookie.html/, function (match) {
 	mist.page.get('/11_permanent_link.html');
 });
 mist.event.add_complate(/11_permanent_link.html/, function (match) {
-	if ($('a').attr('href') !== 'http://mixi.jp/run_appli.pl?id=15936&appParams=%2522%252F11_permanent_link.html%2522') console.error(match);
+	if ($('a:first').attr('href') !== 'http://mixi.jp/run_appli.pl?id=15936&owner_id=10264215&appParams=%2522%252F11_permanent_link.html%2522') console.error(match);
+	if ($('a:last').attr('href') !== 'http://mixi.jp/run_appli.pl?id=15936&owner_id=10264215&appParams=%2522%252Findex.html%2522') console.error(match);
 	mist.page.get('/12_var.html');
 });
 

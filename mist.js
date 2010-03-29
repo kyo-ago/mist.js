@@ -3,9 +3,9 @@
  * Copyright (C) KAYAC Inc. | http://www.kayac.com/
  * Dual licensed under the MIT <http://www.opensource.org/licenses/mit-license.php>
  * and GPL <http://www.opensource.org/licenses/gpl-license.php> licenses.
- * Date: 2010-03-26
+ * Date: 2010-03-29
  * @author kyo_ago
- * @version 1.1.6
+ * @version 1.1.7
  * @require jQuery 1.3.* or later
  * @require jQuery opensocial-simple plugin
  * @see http://github.com/kyo-ago/mist.js
@@ -25,31 +25,30 @@ mist.init = function _t_mist_init () {
 	this.social.load_person(function () {
 		// 権限の検証 
 		mist.auth.check();
-	});
+		$(function () {
+			// live eventの設定 
+			// 上から順に呼ばれる 
+			$('a').live('click.mist.event_requestShareApp', mist.event.requestShareApp);
+			$('a').live('click.mist.event_diary', mist.event.diary);
+			$('a').live('click.mist.event_link', mist.event.link);
+			// フォームのsubmit処理。1.3系はIEでsubmitをliveでとれないので、:submitのclickを取る 
+			// 1.4でもIEでsubmitとれなかったので修正 
+			var old_ver = $.fn.jquery.match(/^1\.[34]\./) && $.browser.msie;
+			old_ver ? $(':submit, :image').live('click.mist_event_form', function (env) {
+				mist.event.form.call($(this).closest('form').get(0), env);
+			}) : $('form').live('submit.mist_event_form', mist.event.form);
 
-	$(function () {
-		// live eventの設定 
-		// 上から順に呼ばれる 
-		$('a').live('click.mist.event_requestShareApp', mist.event.requestShareApp);
-		$('a').live('click.mist.event_diary', mist.event.diary);
-		$('a').live('click.mist.event_link', mist.event.link);
-		// フォームのsubmit処理。1.3系はIEでsubmitをliveでとれないので、:submitのclickを取る 
-		// 1.4でもIEでsubmitとれなかったので修正 
-		var old_ver = $.fn.jquery.match(/^1\.[34]\./) && $.browser.msie;
-		old_ver ? $(':submit, :image').live('click.mist_event_form', function (env) {
-			mist.event.form.call($(this).closest('form').get(0), env);
-		}) : $('form').live('submit.mist_event_form', mist.event.form);
+			// フィルタのセットアップ 
+			$.each(mist.add_filters.filters, function () { this(); });
+			var param = $os.getParams();
+			if ('string' !== typeof param) param = '';
+			// /の読み込み 
+			if (mist.conf.api_url) mist.page.throw_request(param || mist.conf.index_page || '/index.html', 'GET');
 
-		// フィルタのセットアップ 
-		$.each(mist.add_filters.filters, function () { this(); });
-		var param = $os.getParams();
-		if ('string' !== typeof param) param = '';
-		// /の読み込み 
-		if (mist.conf.api_url) mist.page.throw_request(param || mist.conf.index_page || '/index.html', 'GET');
-
-		// 追加対象タグの設定 
-		if (!$('#mist_content').length) $('body').append('<div id="mist_content"></div>');
-		mist.page.adjust();
+			// 追加対象タグの設定 
+			if (!$('#mist_content').length) $('body').append('<div id="mist_content"></div>');
+			mist.page.adjust();
+		});
 	});
 };
 
@@ -263,7 +262,10 @@ mist.add_filters(function () {
 		{
 			'name' : 'permanent_link',
 			'exec' : function _t_mist_template_filter_permanent_link () {
-				self.data = self.data.replace(/\[%permanent_link\s*%\]/g, mist.utils.create_permanent_link());
+				self.data = self.data.replace(/\[%permanent_link(.*?)%\]/g, function (all, param) {
+					param = param ? parse_attr_param(param) : {};
+					return mist.utils.create_permanent_link(param.path);
+				});
 			}
 		},
 		// [%var name="(\w+)"%]の置き換え 
