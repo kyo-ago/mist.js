@@ -171,11 +171,11 @@ mist.confに設定可能な項目は以下の通りです。
  * replace\_href  
  	パーマネントリンクモード。trueが設定された場合、リンククリック時に固定URLでの画面遷移を行う。初期値undefined
  * OWNER\_REQUIRE\_APP\_URL  
- 	オーナーにアプリの所有を要求する（所有していない場合このURLへ移動）。undefiendが指定された場合画面遷移を行わない。初期値http://mixi.jp/join\_appli.pl?id=app\_id
+ 	オーナーにアプリの所有を要求する（所有していない場合このURLへ移動）。undefinedが指定された場合画面遷移を行わない。初期値http://mixi.jp/join\_appli.pl?id=app\_id
  * VIEWER\_REQUIRE\_APP\_URL  
- 	ビュアーにアプリの所有を要求する（所有していない場合このURLへ移動）。undefiendが指定された場合画面遷移を行わない。初期値http://mixi.jp/join\_appli.pl?id=app\_id
+ 	ビュアーにアプリの所有を要求する（所有していない場合このURLへ移動）。undefinedが指定された場合画面遷移を行わない。初期値http://mixi.jp/join\_appli.pl?id=app\_id
  * REQUIRE\_OWNER\_EQ\_VIEWER\_URL  
- 	オーナーとビュアーが同じであることを要求する（同じでない場合このURLへ移動）。undefiendが指定された場合画面遷移を行わない。初期値http://mixi.jp/run\_appli.pl?id=app\_id
+ 	オーナーとビュアーが同じであることを要求する（同じでない場合このURLへ移動）。undefinedが指定された場合画面遷移を行わない。初期値http://mixi.jp/run\_appli.pl?id=app\_id
  * anonymous\_user  
  	ユーザ情報の取得に失敗した場合の初期値。object。初期値は以下の通り
 	 * id  
