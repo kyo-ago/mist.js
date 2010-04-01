@@ -195,9 +195,9 @@ mist.confに設定可能な項目は以下の通りです。
 mist.jsを読み込んだ後に以下の形式で設定してください。
 
 	$.extend(mist.conf, {
-		'index\_page' : '/index.html',
-		'doc\_root\_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/',
-		'api\_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/',
+		'index_page' : '/index.html',
+		'doc_root_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/',
+		'api_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/',
 		// 以下同じ形式で内容を設定 
 		'' : ''
 	});
