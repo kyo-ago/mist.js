@@ -71,6 +71,7 @@ has_appが指定された場合、マイミクのうち同じアプリを使用�
     &lt;span class="activity_target"&gt;送信先mixi id,送信先mixi id...&lt;/span&gt;
     &lt;span class="activity_image"&gt;http://アクティビティ画像URL/file.(gif|jpe?g|png),http://アクティビティ画像URL/file.(gif|jpe?g|png)...&lt;/span&gt;
     &lt;span class="activity_params"&gt;アクティビティURLパラメータ&lt;/span&gt;
+    &lt;span class="activity_priority"&gt;high or low&lt;/span&gt;
 &lt;/div&gt;
 </code></pre>
 
@@ -84,9 +85,9 @@ has_appが指定された場合、マイミクのうち同じアプリを使用�
 
 #### fieldに指定できる値
 
-以下の内容を指定可能ですが、id、nickname、has\_app、profile\_url、thumnail\_url\*以外はユーザの設定により取得できない場合があります。
+以下の内容を指定可能ですが、id、nickname、has\_app、profile\_url、thumnail\_url\*、app\_url以外はユーザの設定により取得できない場合があります。
 
-id、nickname、has\_app、profile\_url、thumnail\_url\*に関しては取得に失敗した場合でもダミーの情報を設定します。
+id、nickname、has\_app、profile\_url、thumnail\_url\*、app\_urlに関しては取得に失敗した場合でもダミーの情報を設定します。
 
 [%(OWNER|VIEWER)%]、[%people%]はfieldが指定されていない場合、nicknameが指定されているものと仮定します。
 
@@ -104,6 +105,8 @@ id、nickname、has\_app、profile\_url、thumnail\_url\*に関しては取得�
  	 * サムネイルURL（40×40）
  * profile\_url
  	 * プロフィールURL
+ * app\_url
+ 	 * このユーザのアプリ画面URL
  * current\_location\_text
  	 * current\_location text（北海道～沖縄県のいずれか）
  * gender\_key
@@ -155,9 +158,11 @@ URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが�
 mist.confに設定可能な項目は以下の通りです。
 
  * api\_url  
- 	リンクURLの先頭につけられるURL。a[href],form[action]に使用。初期値undefined
+ 	リンクURLの先頭につけられるURL。a[href],form[action]に使用。初期値gadget.xmlが設置されているドメインの「/」
  * index\_page  
  	最初に取得するpath（api\_url + index\_pageを最初に取得）。初期値'/index.html'
+ * no\_index\_load
+ 	trueの場合自動的に最初のページを読み込まない。初期値undefined
  * doc\_root\_url  
  	画像URLの先頭につけられるURL。img[src]が/から始まっている場合使用（相対指定の場合使用しない）。初期値undefined（先頭に追加しない）
  * mist\_template\_filter\_strip\_mist\_content\_tags  
@@ -171,11 +176,11 @@ mist.confに設定可能な項目は以下の通りです。
  * replace\_href  
  	パーマネントリンクモード。trueが設定された場合、リンククリック時に固定URLでの画面遷移を行う。初期値undefined
  * OWNER\_REQUIRE\_APP\_URL  
- 	オーナーにアプリの所有を要求する（所有していない場合このURLへ移動）。undefinedが指定された場合画面遷移を行わない。初期値http://mixi.jp/join\_appli.pl?id=app\_id
+ 	オーナーにアプリの所有を要求する（所有していない場合このURLへ移動）。''が指定された場合画面遷移を行わない。初期値http://mixi.jp/join\_appli.pl?id=app\_id
  * VIEWER\_REQUIRE\_APP\_URL  
- 	ビュアーにアプリの所有を要求する（所有していない場合このURLへ移動）。undefinedが指定された場合画面遷移を行わない。初期値http://mixi.jp/join\_appli.pl?id=app\_id
+ 	ビュアーにアプリの所有を要求する（所有していない場合このURLへ移動）。''が指定された場合画面遷移を行わない。初期値http://mixi.jp/join\_appli.pl?id=app\_id
  * REQUIRE\_OWNER\_EQ\_VIEWER\_URL  
- 	オーナーとビュアーが同じであることを要求する（同じでない場合このURLへ移動）。undefinedが指定された場合画面遷移を行わない。初期値http://mixi.jp/run\_appli.pl?id=app\_id
+ 	オーナーとビュアーが同じであることを要求する（同じでない場合このURLへ移動）。''が指定された場合画面遷移を行わない。初期値http://mixi.jp/run\_appli.pl?id=app\_id
  * anonymous\_user  
  	ユーザ情報の取得に失敗した場合の初期値。object。初期値は以下の通り
 	 * id  
@@ -186,11 +191,15 @@ mist.confに設定可能な項目は以下の通りです。
 	 	false
 	 * profile\_url  
 	 	'http://mixi.jp/'
+	 * app\_url  
+	 	'http://mixi.jp/run_appli.pl?id=app_id&owner_id=0'
 	 * thumnail\_url  
 	 	'http://img.mixi.jp/img/basic/common/noimage\_member76.gif'
  * analytics\_key  
- 	Google Analyticsのkey（例 : UA-xxxxxxxx-x）このパラメータを使用する場合、gadget.xmlに&lt;Require feature="analytics" /&gt;を設定する。出力形式は以下の通り。  
+ 	Google Analyticsのkey（例 : UA-xxxxxxxx-x）。このパラメータを使用する場合、gadget.xmlに&lt;Require feature="analytics" /&gt;を設定する。出力形式は以下の通り。  
  	'/(canvas|profile|home)/' + mist.page.serialize_url
+ * no\_live\_event  
+ 	通常のlive eventを設定しない（linkのclick、formのsubmitにeventの設定を行わない）。初期値false。自分でイベントの設定を行いたい場合に使用。
 
 mist.jsを読み込んだ後に以下の形式で設定してください。
 
@@ -269,7 +278,10 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
  	 	 	{ 'recipientIds' : [誘ったmixi id, ...]/* 誘ったマイミクが居ない場合[] */ }
  * mist.as.get\_permanent\_link  
   	現在表示している画面の固定リンク用URLを取得する。
- 	 * 返り値  
+  	 * 引数
+ 	 	 * path  
+ 	 	 	対象URL用の固定リンクURLを返す
+	 * 返り値  
 	 	 固定リンクURL。string
  * mist.as.throw\_diary  
   	mixiの「日記を書く」画面へ遷移する。
@@ -289,6 +301,8 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
  	 	 	 	アクティビティを送信するマイミクID（複数存在素場合「,」で区切る）
  	 	 	 * media\_item  
  	 	 	 	アクティビティに表示する画像URL（複数存在素場合「,」で区切る。最大3つ。gif,jpg,pngのみ認識）
+ 	 	 	 * priority  
+ 	 	 	 	優先度。HIGH, LOWのいずれか。HIGHの場合、一時的にswfを非表示化する。
  * mist.as.navigate\_to  
   	画面遷移を行う。
  	 * 引数
@@ -322,8 +336,8 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
 
  * people object  
  	以下のプロパティが存在するobjectです。  
-	id、nickname、has\_app、profile\_url、thumnail\_url\*以外はユーザの設定により取得できない場合があります。  
-	id、nickname、has\_app、profile\_url、thumnail\_url\*に関しては取得に失敗した場合でもダミーの情報を設定します。
+	id、nickname、has\_app、profile\_url、thumnail\_url\*、app\_url以外はユーザの設定により取得できない場合があります。  
+	id、nickname、has\_app、profile\_url、thumnail\_url\*、app\_urlに関しては取得に失敗した場合でもダミーの情報を設定します。
 
 	 * id
 	 	 * mixi ID
@@ -339,6 +353,8 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
 	 	 * サムネイルURL（40×40）
 	 * profile\_url
 	 	 * プロフィールURL
+	 * app\_url
+	 	 * このユーザのアプリ画面URL
 	 * current\_location\_text
 	 	 * current\_location text（北海道～沖縄県のいずれか）
 	 * gender\_key
