@@ -27,6 +27,7 @@ JSを書かなくてもそこそこリッチなmixi appが作れるフレーム�
 
 	<Require feature="opensocial-0.8" />
 	<Require feature="dynamic-height" />
+	<Require feature="views" />
 
 2, gadget.xmlのModule Content内に以下の内容を記述してください。  
 **！！！アプリ公開時には必ずファイルを自分のサーバに保存してそこから読み込んでください！！！**
