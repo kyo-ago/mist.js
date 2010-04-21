@@ -44,7 +44,7 @@ mist.init = function _t_mist_init () {
 			var param = $os.getParams();
 			if ('string' !== typeof param) param = '';
 			// /の読み込み 
-			if (mist.conf.no_index_load) mist.page.throw_request(param || mist.conf.index_page || '/index.html', 'GET');
+			if (!mist.conf.no_index_load) mist.page.throw_request(param || mist.conf.index_page || '/index.html', 'GET');
 
 			// 追加対象タグの設定 
 			if (!$('#mist_content').length) $('body').append('<div id="mist_content"></div>');
@@ -643,10 +643,10 @@ $.extend(mist.event = {}, {
 		};
 
 		// rel="external"は直外部リンク 
-		if ($(this).attr('rel').toLowerCase().match(/external/)) return check_target();
+		if ($(this).attr('rel').toLowerCase().match(/external/)) return set_target();
 
 		// mixi内リンクはブラウザに処理させる 
-		if (href.match(mosix('^http://(?:[^/]+\\.)?mixi(:?\\.co)?\\.jp/'))) return check_target();
+		if (href.match(mosix('^http://(?:[^/]+\\.)?mixi(:?\\.co)?\\.jp/'))) return set_target();
 
 		env.preventDefault();
 		// 「#」開始はトップへ画面遷移 
@@ -711,7 +711,7 @@ $.extend(mist.utils = {}, {
 		;
 		if (!url_param.appParams) url_param.appParams = mist.page.serialize_url;
 		if (url_param.appParams.match(/^#/)) url_param.appParams = mist.page.serialize_url + url_param.appParams;
-		url_param.appParams = encodeURIComponent(encodeURIComponent('"' + url_param.appParams + '"'));
+		url_param.appParams = encodeURIComponent('"' + url_param.appParams + '"');
 		if (!+url_param.owner_id) delete(url_param.owner_id);
 		return 'http://mixi.jp/run_appli.pl?' + $.param(url_param);
 	},
@@ -864,13 +864,15 @@ function hide_swf_wrapper (callback) {
 	});
 	mist.page.taget_top();
 	callback(function () {
-		// object, embedを表示する 
-		$('object, embed').each(function () {
-			var size = $.data(this, name) || data;
-			$(this).width(size.width);
-			$(this).height(size.height);
-			$.removeData(this, name);
-		});
+		setTimeout(function () {
+			// object, embedを表示する 
+			$('object, embed').each(function () {
+				var size = $.data(this, name) || data;
+				$(this).width(size.width);
+				$(this).height(size.height);
+				$.removeData(this, name);
+			});
+		}, 0);
 	});
 };
 
