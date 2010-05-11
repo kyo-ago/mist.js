@@ -23,8 +23,8 @@ window.$os = window.$.opensocial_simple || load_opensocial_mock();
 */
 mist.init = function _t_mist_init () {
 	this.social.load_person(function () {
-		// 権限の検証 
-		mist.auth.check();
+		// 権限の検証（canvas view以外は無視） 
+		if (gadgets.views.getCurrentView().getName() === 'canvas') mist.auth.check();
 		$(function () {
 			// 共通live eventの設定 
 			if (!mist.conf.no_live_event) mist.event.set_default_event();
