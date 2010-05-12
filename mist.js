@@ -418,6 +418,8 @@ $.extend(mist.social = {}, {
 	},
 	// マイミクの情報。テンプレートから要求された場合のみ取得 
 	'friends' : [],
+	// マイミク総数 
+	'total_friends' : 0,
 	// 取得しているユーザ情報のキャッシュ 
 	'cache' : {},
 	// personのモック追加 
@@ -501,6 +503,7 @@ $.extend(mist.social = {}, {
 				cache[obj.id] = obj;
 				friends.push(obj);
 			});
+			self.total_friends = fr.getTotalSize();
 			callback();
 			mist.env.loading_queue.pop();
 		};
