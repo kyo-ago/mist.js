@@ -853,15 +853,16 @@ $.extend(mist.utils = {}, {
 
 function hide_swf_wrapper (callback) {
 	var name = '_t_hide_swf_wrapper';
-	var data;
+	var data = {};
 	$('object, embed').each(function () {
 		// object, embedを一時的に非表示にする 
-		// （.hide()は.show()した後、IEでExIfが呼べなくなるのでだめ） 
-		data = {
+		var url = $(this).get_swf_url();
+		$.data(this, name, data[url] = {
 			'width' : $(this).width(),
 			'height' : $(this).height()
-		};
-		$.data(this, name, data);
+		});
+		// （.hide()は.show()した後、IEでExIfが呼べなくなるのでだめ） 
+		// object, embedには.dataが効かないっぽい 
 		$(this).width(1);
 		$(this).height(1);
 	});
@@ -870,13 +871,23 @@ function hide_swf_wrapper (callback) {
 		setTimeout(function () {
 			// object, embedを表示する 
 			$('object, embed').each(function () {
-				var size = $.data(this, name) || data;
+				var size = data[$(this).get_swf_url()];
 				$(this).width(size.width);
 				$(this).height(size.height);
 				$.removeData(this, name);
 			});
 		}, 0);
 	});
+};
+
+/*
+	object, embedからswfのURLを取得
+*/
+$.fn.get_swf_url = function () {
+	return $(this).find('param[name="movie"]').attr('value')
+		|| $(this).attr('data')
+		|| $(this).attr('src')
+	;
 };
 
 /*
