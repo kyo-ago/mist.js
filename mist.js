@@ -3,9 +3,9 @@
  * Copyright (C) KAYAC Inc. | http://www.kayac.com/
  * Dual licensed under the MIT <http://www.opensource.org/licenses/mit-license.php>
  * and GPL <http://www.opensource.org/licenses/gpl-license.php> licenses.
- * Date: 2010-04-08
+ * Date: 2010-05-28
  * @author kyo_ago
- * @version 1.1.8
+ * @version 1.1.9
  * @require jQuery 1.3 or later
  * @require jQuery opensocial-simple plugin
  * @see http://github.com/kyo-ago/mist.js
@@ -884,7 +884,7 @@ function hide_swf_wrapper (callback) {
 	object, embedからswfのURLを取得
 */
 $.fn.get_swf_url = function () {
-	return $(this).find('param[name="movie"]').attr('value')
+	return $(this).children('param[name="movie"]:first').attr('value')
 		|| $(this).attr('data')
 		|| $(this).attr('src')
 	;
