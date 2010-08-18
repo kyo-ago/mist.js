@@ -564,6 +564,7 @@ $.extend(mist.event = {}, {
 		// 上から順に呼ばれる 
 		$('a').live('click.mist.event_requestShareApp', mist.event.requestShareApp);
 		$('a').live('click.mist.event_diary', mist.event.diary);
+		$('a').live('click.mist.event_schedule', mist.event.schedule);
 		$('a').live('click.mist.event_link', mist.event.link);
 		// フォームのsubmit処理。1.3系はIEでsubmitをliveでとれないので、:submitのclickを取る 
 		// 1.4でもIEでsubmitとれなかったので修正 
@@ -629,6 +630,28 @@ $.extend(mist.event = {}, {
 		var target = $(this).attr('target');
 		if (!target) $(this).attr('target', '_blank');
 		$(this).attr('href', mist.utils.create_diary_url(title, body)).click();
+	},
+	// 「予定を追加する」リンクの処理 
+	'schedule' : function _t_mist_event_schedule (env) {
+		if (env.button) return;
+		if ($(this).attr('href') !== 'http://mixi.jp/add_schedule_entry.pl') return;
+		env.stopImmediatePropagation();
+
+		// 相対指定テンプレートの取得 
+		var schedule = $(this).closest('.mist_schedule');
+		// 絶対指定テンプレートの取得 
+		if (!schedule.length) schedule = $('#mist_schedule');
+		if (!schedule.length) throw new Error(' mist : missing schedule template');
+
+		var target = $(this).attr('target');
+		if (!target) $(this).attr('target', '_blank');
+		var param = {};
+		// .text()はIEが勝手に改行削るので.val()で取る 
+		$.each(['title', 'body', 'details', 'year', 'month', 'day', 'hour', 'minute', 'recruit', 'level'], function () {
+			param[this] = schedule.find('.schedule_'+this).val();
+		});
+		param['details'] = param['body'] || param['details'];
+		$(this).attr('href', mist.utils.create_schedule_url(param)).click();
 	},
 	// その他リンクの処理 
 	'link' : function _t_mist_event_link (env) {
@@ -727,11 +750,43 @@ $.extend(mist.utils = {}, {
 			'diary_body' : EscapeEUCJP(body.replace(/\\n|<br\s*\/?>/g, '\n'))
 		}).replace(/%25/g, '%');
 	},
+	// 「予定を追加する」URLの組み立て 
+	'create_schedule_url' : function _t_mist_utils_create_schedule_url (title, details, param) {
+		if (arguments.length === 3) {
+			param = param || {};
+			param['title'] = title;
+			param['details'] = details;
+		} else { param = title };
+		param['details'] = param['body'] || param['details'];
+		var EscapeEUCJP = get_EscapeEUCJP();
+		param['title'] = EscapeEUCJP(param['title']);
+		param['details'] = EscapeEUCJP(param['details'].replace(/\\n|<br\s*\/?>/g, '\n'));
+		return 'http://mixi.jp/add_schedule_entry.pl?' + $.param(param).replace(/%25/g, '%');
+	},
 	// 「日記に書く」画面への遷移 
 	'throw_diary' : function _t_mist_utils_throw_diary (title, body, target) {
 		title = title ? mist.utils.replace_appid_person(title) : '';
 		body = body ? mist.utils.replace_appid_person(body) : '';
 		var url = mist.utils.create_diary_url(title, body);
+		return window.open(url, target || '_blank');
+	},
+	// 「予定を追加する」画面への遷移 
+	'throw_schedule' : function _t_mist_utils_throw_schedule (title, details, target, param) {
+		if (arguments.length === 4) {
+			param = param || {};
+			param['title'] = title;
+			param['details'] = details;
+			param['target'] = target;
+		} else if (arguments.length === 3) {
+			param = target;
+			target = undefined;
+		} else { param = title };
+		param['details'] = param['body'] || param['details'];
+		target = param['target'];
+		delete param['target'];
+		param['title'] = param['title'] ? mist.utils.replace_appid_person(param['title']) : '';
+		param['details'] = param['details'] ? mist.utils.replace_appid_person(param['details']) : '';
+		var url = mist.utils.create_diary_url(param);
 		return window.open(url, target || '_blank');
 	},
 	// アクティビティを投げる 
@@ -951,6 +1006,10 @@ $.extend(mist.as = {}, {
 	// 「日記に書く」画面への遷移 
 	'throw_diary' : function _t_mist_as_throw_diary () {
 		mist.utils.throw_diary.apply(this, arguments);
+	},
+	// 「予定を追加する」画面への遷移 
+	'throw_schedule' : function _t_mist_as_throw_schedule () {
+		mist.utils.throw_schedule.apply(this, arguments);
 	},
 	// アクティビティを投げる 
 	'throw_activity' : function _t_mist_as_throw_activity () {

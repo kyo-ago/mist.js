@@ -74,10 +74,10 @@ mist.event.add_complate(/12_var.html/, function (match) {
 		if (href == text) return;
 		console.error(href, text);
 	});
+	mist.page.get('/13_schedule.html');
 });
 mist.event.add_complate(/13_schedule.html/, function (match) {
 	$('a').click();
-	if ($('a:contains("相対指定")').attr('href') !== 'http://mixi.jp/add_diary.pl?id=10264215&diary_title=%A5%BF%A5%A4%A5%C8%A5%EB%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%A1%CA%C1%EA%C2%D0%BB%D8%C4%EA%A1%CB&diary_body=%CB%DC%CA%B8%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%0A%A1%CA%C1%EA%C2%D0%BB%D8%C4%EA%A1%CB') console.error(match, '相対指定');
-	if ($('a:contains("絶対指定")').attr('href') !== 'http://mixi.jp/add_diary.pl?id=10264215&diary_title=%A5%BF%A5%A4%A5%C8%A5%EB%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%A1%CA%C0%E4%C2%D0%BB%D8%C4%EA%A1%CB&diary_body=%CB%DC%CA%B8%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%0A%A1%CA%C0%E4%C2%D0%BB%D8%C4%EA%A1%CB') console.error(match, '絶対指定');
-	mist.page.get('/6_activity.html');
+	if ($('a:contains("相対指定")').attr('href') !== 'http://mixi.jp/add_schedule_entry.pl?title=%A5%BF%A5%A4%A5%C8%A5%EB%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%A1%CA%C1%EA%C2%D0%BB%D8%C4%EA%A1%CB&body=undefined&details=%CB%DC%CA%B8%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%0A%A1%CA%C1%EA%C2%D0%BB%D8%C4%EA%A1%CB&year=2010&month=10&day=1&hour=1&minute=15&recruit=0&level=4') console.error(match, '相対指定');
+	if ($('a:contains("絶対指定")').attr('href') !== 'http://mixi.jp/add_schedule_entry.pl?title=%A5%BF%A5%A4%A5%C8%A5%EB%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%A1%CA%C0%E4%C2%D0%BB%D8%C4%EA%A1%CB&body=undefined&details=%CB%DC%CA%B8%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%0A%A1%CA%C0%E4%C2%D0%BB%D8%C4%EA%A1%CB&year=2010&month=10&day=1&hour=1&minute=15&recruit=0&level=4') console.error(match, '絶対指定');
 });

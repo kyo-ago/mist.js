@@ -12,6 +12,7 @@ JSを書かなくてもそこそこリッチなmixi appが作れるフレーム�
  * 画面遷移の制御
  * 表示領域の自動調整
  * 「日記に書く」リンク
+ * 「予定を追加する」リンク
  * アクティビティの発行
  * 「友達を誘う」機能
  * cookieのサポート
@@ -143,16 +144,31 @@ URLに「/opensocial/sharefriend/#http://example.com/path」の形式でURLが�
 テンプレート内に以下の形式で日記の内容を記述してください。
 
 	<div id="mist_diary" style="display:none">
-		<input type="text" class="diary_title" value="日記タイトル" />
+		<input type="hidden" class="diary_title" value="日記タイトル" />
 		<textarea class="diary_body">日記<br />本文</textarea>
 	</div>
 
-3, 「http://mixi.jp/」で始まっていればmixi内へのリンクと判断し、ブラウザの処理にゆだねます。
+3, 「http://mixi.jp/add\_schedule\_entry.pl」と一致すれば予定を追加する画面への遷移を行います。  
+テンプレート内に以下の形式で予定の内容を記述してください。
 
-4, 「/」で始まっていればAPIへのアクセスと判断し、mist.conf.api\_urlにhrefの内容を追加して新しいテンプレートを取得します。  
+	<div id="mist_schedule" style="display:none">
+		<input type="hidden" class="schedule_title" value="予定タイトル" />
+		<textarea class="schedule_details">予定<br />本文</textarea>
+		<input type="hidden" class="schedule_year" value="2010" />
+		<input type="hidden" class="schedule_month" value="10" />
+		<input type="hidden" class="schedule_day" value="1" />
+		<input type="hidden" class="schedule_hour" value="1" />
+		<input type="hidden" class="schedule_minute" value="15" />
+		<input type="hidden" class="schedule_recruit" value="0" />
+		<input type="hidden" class="schedule_level" value="4" />
+	</div>
+
+4, 「http://mixi.jp/」で始まっていればmixi内へのリンクと判断し、ブラウザの処理にゆだねます。
+
+5, 「/」で始まっていればAPIへのアクセスと判断し、mist.conf.api\_urlにhrefの内容を追加して新しいテンプレートを取得します。  
 （このときパーマネントリンクモードが設定されている場合のみ画面遷移を行います）
 
-5, 「http://」で始まっていれば外部URLへのアクセスと判断し、mixi.util.requestExternalNavigateToで外部URLへ遷移します。
+6, 「http://」で始まっていれば外部URLへのアクセスと判断し、mixi.util.requestExternalNavigateToで外部URLへ遷移します。
 
 ### 設定項目に関して
 
@@ -291,6 +307,27 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
  	 	 	日記タイトル
  	 	 * body  
  	 	 	日記本文（改行可）
+ * mist.as.throw\_schedule  
+  	mixiの「予定を追加する」画面へ遷移する。
+ 	 * 引数
+ 	 	 * title  
+ 	 	 	予定タイトル
+ 	 	 * body  
+ 	 	 	予定本文（改行可）
+ 	 	 * param
+ 	 	 	設定内容。object。設定可能な内容は以下の通り
+ 	 	 	 * year  
+ 	 	 	 	年初期値（2010-2011）
+ 	 	 	 * month  
+ 	 	 	 	月初期値（1-12）
+ 	 	 	 * day  
+ 	 	 	 	日初期値（1-31）
+ 	 	 	 * hour  
+ 	 	 	 	時初期値（0-23）
+ 	 	 	 * minute  
+ 	 	 	 	分初期値（0,15,30,45）
+ 	 	 	 * recruit  
+ 	 	 	 	参加者の募集（0,1。0=募集する、1=募集しない）
  * mist.as.throw\_activity  
   	更新情報を送信する。
  	 * 引数
