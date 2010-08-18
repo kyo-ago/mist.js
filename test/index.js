@@ -67,7 +67,6 @@ mist.event.add_complate(/11_permanent_link.html/, function (match) {
 	if ($('a:last').attr('href') !== 'http://mixi.jp/run_appli.pl?id=15936&owner_id=10264215&appParams=%2522%252Findex.html%2522') console.error(match);
 	mist.page.get('/12_var.html');
 });
-
 mist.event.add_complate(/12_var.html/, function (match) {
 	$('a').each(function () {
 		var href = $(this).attr('href');
@@ -75,4 +74,10 @@ mist.event.add_complate(/12_var.html/, function (match) {
 		if (href == text) return;
 		console.error(href, text);
 	});
+});
+mist.event.add_complate(/13_schedule.html/, function (match) {
+	$('a').click();
+	if ($('a:contains("相対指定")').attr('href') !== 'http://mixi.jp/add_diary.pl?id=10264215&diary_title=%A5%BF%A5%A4%A5%C8%A5%EB%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%A1%CA%C1%EA%C2%D0%BB%D8%C4%EA%A1%CB&diary_body=%CB%DC%CA%B8%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%0A%A1%CA%C1%EA%C2%D0%BB%D8%C4%EA%A1%CB') console.error(match, '相対指定');
+	if ($('a:contains("絶対指定")').attr('href') !== 'http://mixi.jp/add_diary.pl?id=10264215&diary_title=%A5%BF%A5%A4%A5%C8%A5%EB%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%A1%CA%C0%E4%C2%D0%BB%D8%C4%EA%A1%CB&diary_body=%CB%DC%CA%B8%A5%C6%A5%F3%A5%D7%A5%EC%A1%BC%A5%C8%0A%A1%CA%C0%E4%C2%D0%BB%D8%C4%EA%A1%CB') console.error(match, '絶対指定');
+	mist.page.get('/6_activity.html');
 });
