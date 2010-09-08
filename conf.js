@@ -28,6 +28,8 @@ $.extend(mist.conf, {
 	'replace_href' : false,
 	// google analytics key 
 	'analytics_key' : 'UA-xxxxxxxx-x',
+	// google analytics iframe src(require p3p header. append serialize url) 
+	'analytics_url' : 'http://github.com/kyo-ago/mist.js/raw/master/test/ga.php'
 	// デバッグモード 
 	'debug_mode' : false
 });

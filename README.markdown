@@ -215,6 +215,9 @@ mist.confに設定可能な項目は以下の通りです。
  * analytics\_key  
  	Google Analyticsのkey（例 : UA-xxxxxxxx-x）。このパラメータを使用する場合、gadget.xmlに&lt;Require feature="analytics" /&gt;を設定する。出力形式は以下の通り。  
  	'/(canvas|profile|home)/' + mist.page.serialize_url
+ * analytics\_url  
+ 	Google Analyticsへアクセスするiframeのurl（例 : http://example.com/ga.php）。 mixiはp3p headerを出力していないため、上記analytics\_keyでは初期設定のIEとsafariのアクセスログは取得できない。その回避のため、p3p headerを出力するurlを外部iframeで読み込みアクセスログを取得する（ただし、この方法でもsafariのアクセスログは取得できない）。設定例の場合の出力形式は以下の通り。
+ 	'/ga.php/(canvas|profile|home)/' + mist.page.serialize_url
  * no\_live\_event  
  	通常のlive eventを設定しない（linkのclick、formのsubmitにeventの設定を行わない）。初期値false。自分でイベントの設定を行いたい場合に使用。
 

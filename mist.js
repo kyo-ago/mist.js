@@ -3,9 +3,9 @@
  * Copyright (C) KAYAC Inc. | http://www.kayac.com/
  * Dual licensed under the MIT <http://www.opensource.org/licenses/mit-license.php>
  * and GPL <http://www.opensource.org/licenses/gpl-license.php> licenses.
- * Date: 2010-05-28
+ * Date: 2010-09-08
  * @author kyo_ago
- * @version 1.1.9
+ * @version 1.1.10
  * @require jQuery 1.3 or later
  * @require jQuery opensocial-simple plugin
  * @see http://github.com/kyo-ago/mist.js
@@ -303,8 +303,22 @@ mist.add_filters(function () {
 		mist.event.add_complate({
 			'name' : 'analytics',
 			'exec' : function _t_mist_event_add_complate_analytics () {
-				setTimeout(function () {
+				setTimeout(function _t_mist_event_add_complate_analytics_inner () {
 					window._IG_Analytics(mist.conf.analytics_key, '/' + gadgets.views.getCurrentView().getName() + '/' + mist.page.serialize_url);
+				}, 0);
+			}
+		});
+	})();
+
+	// google analytics iframeの読み込み 
+	if (mist.conf.analytics_url) (function () {
+		mist.event.add_complate({
+			'name' : 'analytics_iframe',
+			'exec' : function _t_mist_event_add_complate_analytics_iframe () {
+				setTimeout(function _t_mist_event_add_complate_analytics_iframe_inner () {
+					var ga_iframe = $('#ga_iframe');
+					if (!ga_iframe.length) ga_iframe = $('<div id="ga_iframe"></div>').appendTo('body');
+					ga_iframe.html('<iframe src="'+mist.conf.analytics_url+'/'+gadgets.views.getCurrentView().getName()+'/'+mist.page.serialize_url+'" style="position:absolute;width:1px;height:1px;overflow:hidden;border:none;top:-100px;left:-100px;" allowtransparency="true" border="0" frameborder="0"></iframe>');
 				}, 0);
 			}
 		});
@@ -1025,7 +1039,7 @@ $.extend(mist.as = {}, {
 			// 相対指定はAPIアクセス 
 			if (href.match(mosix('^/'))) return mist.page.get(href);
 			// 外部リンク 
-			if (href.match(mosix('^https?://'))) return mixi.util.requestExternalNavigateTo(href, mixi.util.ExternalSiteType[target.toUpperCase()]);
+			if (href.match(mosix('^https?://'))) return mixi.util.requestExternalNavigateTo(href, mixi.util.ExternalSiteType[(target || '').toUpperCase()]);
 		}, 0);
 	},
 	// 値の取得、保存 
