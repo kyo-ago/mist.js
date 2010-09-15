@@ -372,6 +372,10 @@ mist.jsを読み込み際に以下の形式でパラメータが指定可能で�
  	 * 引数
  	 	 * callback\_name  
  	 	 	callback function name。String。初期値mist\_as\_post\_viewer\_data。引数はなし
+ * mist.as.analytics\_tracker  
+  	analyticsにURLを送信する（mist.conf.analytics_key、mist.conf.analytics_urlのいずれかが必要）
+ 	 * 引数
+ 	 	 * 送信用URL。[%view%]は表示中のview（canvas,profile,homeのいずれか）に置き換えられる。[%url%]は現在表示しているページ固有の値へ置き換えられる。[%current%]は/[%view%]/[%url%]に置き換えられる。初期値[%current%]
 
 以下の内容はActionScript用APIで共通の内容です。
 

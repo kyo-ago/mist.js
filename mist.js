@@ -3,9 +3,9 @@
  * Copyright (C) KAYAC Inc. | http://www.kayac.com/
  * Dual licensed under the MIT <http://www.opensource.org/licenses/mit-license.php>
  * and GPL <http://www.opensource.org/licenses/gpl-license.php> licenses.
- * Date: 2010-09-08
+ * Date: 2010-09-15
  * @author kyo_ago
- * @version 1.1.10
+ * @version 1.1.11
  * @require jQuery 1.3 or later
  * @require jQuery opensocial-simple plugin
  * @see http://github.com/kyo-ago/mist.js
@@ -150,7 +150,7 @@ $.extend(mist.page = {}, {
 });
 
 /*
-	ページ遷移関係
+	テンプレート関係
 */
 $.extend(mist.template = {}, {
 	// 現在のテンプレートhtml(String) 
@@ -297,33 +297,6 @@ mist.add_filters(function () {
 		}
 	});
 
-	// google analytics呼び出し 
-	if (mist.conf.analytics_key) (function () {
-		if (!window._IG_Analytics) throw new Error(' mist : require <Require feature="analytics" />');
-		mist.event.add_complate({
-			'name' : 'analytics',
-			'exec' : function _t_mist_event_add_complate_analytics () {
-				setTimeout(function _t_mist_event_add_complate_analytics_inner () {
-					window._IG_Analytics(mist.conf.analytics_key, '/' + gadgets.views.getCurrentView().getName() + '/' + mist.page.serialize_url);
-				}, 0);
-			}
-		});
-	})();
-
-	// google analytics iframeの読み込み 
-	if (mist.conf.analytics_url) (function () {
-		mist.event.add_complate({
-			'name' : 'analytics_iframe',
-			'exec' : function _t_mist_event_add_complate_analytics_iframe () {
-				setTimeout(function _t_mist_event_add_complate_analytics_iframe_inner () {
-					var ga_iframe = $('#ga_iframe');
-					if (!ga_iframe.length) ga_iframe = $('<div id="ga_iframe"></div>').appendTo('body');
-					ga_iframe.html('<iframe src="'+mist.conf.analytics_url+'/'+gadgets.views.getCurrentView().getName()+'/'+mist.page.serialize_url+'" style="position:absolute;width:1px;height:1px;overflow:hidden;border:none;top:-100px;left:-100px;" allowtransparency="true" border="0" frameborder="0"></iframe>');
-				}, 0);
-			}
-		});
-	})();
-
 	// すべてのリンクを固定URLに書き換える（若干遅くなる） 
 	if (mist.conf.replace_href) mist.event.add_complate({
 		'name' : 'replace_href',
@@ -373,6 +346,48 @@ mist.add_filters(function () {
 		});
 	});
 });
+
+/*
+	analyticsなもの
+*/
+(function () {
+	mist.analytics = {};
+	function str_rep (str, val) {
+		val = val || {};
+		val.view = gadgets.views.getCurrentView().getName();
+		val.url = mist.page.serialize_url;
+		val.current = '/'+val.view+'/'+val.url;
+		return str.replace(/\[%(\w+)%\]/g, function (m, m) {
+			return val[m] || '';
+		});
+	};
+	// google analytics呼び出し 
+	if (mist.conf.analytics_key) {
+		if (!window._IG_Analytics) throw new Error(' mist : require <Require feature="analytics" />');
+		mist.analytics.tracker = function (str) {
+			window._IG_Analytics(mist.conf.analytics_key, str_rep(str));
+		};
+	};
+
+	// google analytics iframeの読み込み 
+	if (mist.conf.analytics_url) {
+		mist.analytics.tracker = function (str) {
+			var ga_iframe = $('#ga_iframe');
+			if (!ga_iframe.length) ga_iframe = $('<div id="ga_iframe"></div>').appendTo('body');
+			ga_iframe.html('<iframe src="'+mist.conf.analytics_url+(str_rep(str))+'" style="position:absolute;width:1px;height:1px;overflow:hidden;border:none;top:-100px;left:-100px;" allowtransparency="true" border="0" frameborder="0"></iframe>');
+		};
+	};
+
+	mist.event.add_complate({
+		'name' : 'analytics',
+		'exec' : function _t_mist_event_add_complate_analytics () {
+			setTimeout(function () {
+				if (mist.analytics.tracker) mist.analytics.tracker('[%current%]');
+			}, 0);
+		}
+	});
+
+})();
 
 /*
 	環境変数的なもの
@@ -1051,6 +1066,10 @@ $.extend(mist.as = {}, {
 	},
 	'post_viewer_data' : function _t_mist_as_post_viewer_data (values, callback_name) {
 		$os.postViewerData(values, as_callback_wrapper(callback_name || 'mist_as_post_viewer_data'));
+	},
+	// analyticsへのURL post 
+	'analytics_tracker' : function _t_mist_as_analytics_tracker (url) {
+		mist.analytics.tracker(url || '[%current%]');
 	}
 });
 
@@ -1150,7 +1169,7 @@ function add_stack_method (obj, name) {
 				var match = path.match(this.path_regexp);
 				if (!match) return;
 				this.exec.call(self, match);
-			} catch (e) { console.warn(e); };
+			} catch (e) { if (window.console) window.console.warn(e); };
 		});
 	};
 };
