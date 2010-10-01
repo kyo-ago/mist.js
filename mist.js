@@ -345,49 +345,48 @@ mist.add_filters(function () {
 			;
 		});
 	});
-});
+	/*
+		analyticsなもの
+	*/
+	(function () {
+		mist.analytics = {};
+		function str_rep (str, val) {
+			val = val || {};
+			val.view = gadgets.views.getCurrentView().getName();
+			val.url = mist.page.serialize_url;
+			val.current = '/'+val.view+'/'+val.url;
+			return str.replace(/\[%(\w+)%\]/g, function (m, m) {
+				return val[m] || '';
+			});
+		};
 
-/*
-	analyticsなもの
-*/
-(function () {
-	mist.analytics = {};
-	function str_rep (str, val) {
-		val = val || {};
-		val.view = gadgets.views.getCurrentView().getName();
-		val.url = mist.page.serialize_url;
-		val.current = '/'+val.view+'/'+val.url;
-		return str.replace(/\[%(\w+)%\]/g, function (m, m) {
-			return val[m] || '';
+		// google analytics呼び出し 
+		if (mist.conf.analytics_key) {
+			if (!window._IG_Analytics) throw new Error(' mist : require <Require feature="analytics" />');
+			mist.analytics.tracker = function (str) {
+				window._IG_Analytics(mist.conf.analytics_key, str_rep(str));
+			};
+		};
+
+		// google analytics iframeの読み込み 
+		if (mist.conf.analytics_url) {
+			mist.analytics.tracker = function (str) {
+				var ga_iframe = $('#ga_iframe');
+				if (!ga_iframe.length) ga_iframe = $('<div id="ga_iframe"></div>').appendTo('body');
+				ga_iframe.html('<iframe src="'+mist.conf.analytics_url+(str_rep(str))+'" style="position:absolute;width:1px;height:1px;overflow:hidden;border:none;top:-100px;left:-100px;" allowtransparency="true" border="0" frameborder="0"></iframe>');
+			};
+		};
+
+		mist.event.add_complate({
+			'name' : 'analytics',
+			'exec' : function _t_mist_event_add_complate_analytics () {
+				setTimeout(function () {
+					if (mist.analytics.tracker) mist.analytics.tracker('[%current%]');
+				}, 0);
+			}
 		});
-	};
-	// google analytics呼び出し 
-	if (mist.conf.analytics_key) {
-		if (!window._IG_Analytics) throw new Error(' mist : require <Require feature="analytics" />');
-		mist.analytics.tracker = function (str) {
-			window._IG_Analytics(mist.conf.analytics_key, str_rep(str));
-		};
-	};
-
-	// google analytics iframeの読み込み 
-	if (mist.conf.analytics_url) {
-		mist.analytics.tracker = function (str) {
-			var ga_iframe = $('#ga_iframe');
-			if (!ga_iframe.length) ga_iframe = $('<div id="ga_iframe"></div>').appendTo('body');
-			ga_iframe.html('<iframe src="'+mist.conf.analytics_url+(str_rep(str))+'" style="position:absolute;width:1px;height:1px;overflow:hidden;border:none;top:-100px;left:-100px;" allowtransparency="true" border="0" frameborder="0"></iframe>');
-		};
-	};
-
-	mist.event.add_complate({
-		'name' : 'analytics',
-		'exec' : function _t_mist_event_add_complate_analytics () {
-			setTimeout(function () {
-				if (mist.analytics.tracker) mist.analytics.tracker('[%current%]');
-			}, 0);
-		}
-	});
-
-})();
+	})();
+});
 
 /*
 	環境変数的なもの
